@@ -22,6 +22,12 @@
             <Setter Property="Padding" Value="7,0"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
+        <!-- 창 목록 줄 안의 버튼: 제목이 넓게 보이도록 좁게 -->
+        <Style x:Key="RowBtn" TargetType="Button" BasedOn="{StaticResource BtnSm}">
+            <Setter Property="MinHeight" Value="24"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
         <Style x:Key="OnOff" TargetType="Button" BasedOn="{StaticResource BtnSm}">
             <Setter Property="FontFamily" Value="{DynamicResource PixelFont}"/>
             <Setter Property="FontWeight" Value="Normal"/>
@@ -54,13 +60,16 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Border x:Name="Px" Width="8" Height="8" Margin="0,0,8,0" Background="{StaticResource Teal}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" TextTrimming="CharacterEllipsis"
+                    <TextBlock x:Name="Name" Grid.Column="1" Text="{Binding Title}" FontSize="13" TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center"/>
-                    <Button Grid.Column="2" Style="{StaticResource BtnSm}" Margin="6,0,0,0" MinWidth="62"
+                    <Button x:Name="TopBtn" Grid.Column="2" Style="{StaticResource RowBtn}" Margin="6,0,0,0" MinWidth="30"
+                            Content="위로" Tag="{Binding}" Click="OnTopClick" ToolTip="이 창을 맨 앞으로 (최소화돼 있으면 열고)"/>
+                    <Button Grid.Column="3" Style="{StaticResource RowBtn}" Margin="3,0,0,0" MinWidth="52"
                             Content="{Binding FitLabel}" Tag="{Binding}" Click="OnFitClick"/>
-                    <Button Grid.Column="3" Style="{StaticResource BtnSm}" Margin="4,0,0,0" MinWidth="50"
+                    <Button Grid.Column="4" Style="{StaticResource RowBtn}" Margin="3,0,0,0" MinWidth="40"
                             Content="{Binding MinLabel}" Tag="{Binding}" Click="OnMinClick"/>
                 </Grid>
             </Border>
@@ -71,6 +80,10 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsMinimized}" Value="True">
                     <Setter TargetName="Row" Property="Opacity" Value="0.55"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter TargetName="Name" Property="FontWeight" Value="Bold"/>
+                    <Setter TargetName="TopBtn" Property="IsEnabled" Value="False"/>
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -273,8 +286,8 @@
                     <Grid Margin="0,0,0,8">
                         <TextBlock Style="{StaticResource CardTitle}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>WINDOW FIT</TextBlock>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="PickBtn" Style="{StaticResource BtnSm}" Content="창 고르기" Click="OnPickClick"
-                                    ToolTip="다음에 클릭한 창을 녹화 영역에 맞춥니다 (Esc 취소)"/>
+                            <Button x:Name="HideMinBtn" Style="{StaticResource BtnSm}" Click="OnHideMinClick"
+                                    ToolTip="최소화된(비활성) 창을 목록에서 숨기기 / 보이기"/>
                             <Button Style="{StaticResource BtnSm}" Content="새로고침" Margin="4,0,0,0" Click="OnRefreshClick"/>
                         </StackPanel>
                     </Grid>

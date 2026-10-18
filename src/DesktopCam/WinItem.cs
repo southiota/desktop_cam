@@ -9,7 +9,7 @@ public class WinItem : INotifyPropertyChanged
     public IntPtr Handle { get; init; }
 
     string _title = "", _sub = "";
-    bool _fitted, _minimized;
+    bool _fitted, _minimized, _active;
 
     public string Title { get => _title; set => Set(ref _title, value); }
     public string Sub { get => _sub; set => Set(ref _sub, value); }
@@ -25,6 +25,9 @@ public class WinItem : INotifyPropertyChanged
         get => _minimized;
         set { if (Set(ref _minimized, value)) Raise(nameof(MinLabel)); }
     }
+
+    /// <summary>지금 맨 앞(사용 중)인 창. 목록 맨 위에 굵게.</summary>
+    public bool IsActive { get => _active; set => Set(ref _active, value); }
 
     public string FitLabel => IsFitted ? "되돌리기" : "맞추기";
     public string MinLabel => IsMinimized ? "열기" : "최소화";

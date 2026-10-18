@@ -6,6 +6,12 @@ namespace DesktopCam;
 
 public partial class App : Application
 {
+    /// <summary>
+    /// DesktopCam.exe 가 있는 폴더. 한 파일 배포에서는 AppContext.BaseDirectory 가 임시 풀림 폴더라서,
+    /// 사용자가 보는 models · tools 는 이 폴더 기준으로 찾는다.
+    /// </summary>
+    public static readonly string ExeDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
+
     Mutex? _single;
 
     protected override void OnStartup(StartupEventArgs e)

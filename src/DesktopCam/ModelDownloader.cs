@@ -67,7 +67,7 @@ public static class ModelDownloader
     {
         foreach (var root in new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "models"),
+            Path.Combine(App.ExeDir, "models"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopCAM", "models"),
         })
         {

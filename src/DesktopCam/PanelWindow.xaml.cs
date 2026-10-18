@@ -22,13 +22,11 @@ public partial class PanelWindow : Window
     const int PanelWidthPx = 440;
     const int HotkeyFit = 1, HotkeyMin = 2, HotkeyRec = 3, HotkeyPause = 4;
     const long MinFreeBytes = 2L * 1024 * 1024 * 1024;   // 이보다 여유 공간이 적으면 녹화를 시작하지 않음
-    static readonly TimeSpan PickTimeout = TimeSpan.FromSeconds(15);
 
     readonly OverlayWindow _overlay;
     readonly Settings _settings;
     readonly WindowFitter _fitter = new();
     readonly ObservableCollection<WinItem> _items = new();
-    readonly DispatcherTimer _pickTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
     readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromSeconds(3) };
 
     readonly AudioMonitor _audio = new();
@@ -47,7 +45,7 @@ public partial class PanelWindow : Window
 
     RECT _region;
     IntPtr _hwnd, _lastMinimized;
-    DateTime _pickStart, _micLastSound = DateTime.Now, _sysClipUntil, _micClipUntil;
+    DateTime _micLastSound = DateTime.Now, _sysClipUntil, _micClipUntil;
     bool _ready, _fillingCombos, _sysMissing, _micMissing;
     string _alertKey = "", _hotkeyFail = "";
     int _statusTick;
@@ -80,9 +78,7 @@ public partial class PanelWindow : Window
         DimSlider.Value = _settings.Dim;
         DimText.Text = $"{_settings.Dim}%";
 
-        _pickTimer.Tick += (_, _) => PickTick();
         _refreshTimer.Tick += (_, _) => RefreshList();
-        PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape && _pickTimer.IsEnabled) StopPick("고르기를 취소했습니다."); };
         SystemEvents.DisplaySettingsChanged += OnDisplayChanged;
 
         Alerts.ItemsSource = _alerts;
@@ -125,9 +121,11 @@ public partial class PanelWindow : Window
         StartupTrace.Mark("hotkeys");
         ApplyRegion();
         StartupTrace.Mark("ApplyRegion");
+        UpdateHideMinButton();
         RefreshList();
         StartupTrace.Mark("RefreshList");
         _refreshTimer.Start();
+        HookWindowEvents();
         ReloadDevices();
         StartupTrace.Mark("ReloadDevices started (background)");
         _meterTimer.Start();
@@ -352,18 +350,26 @@ public partial class PanelWindow : Window
 
     // ── 창 목록 ──
 
-    /// <summary>목록을 다시 읽되, 기존 줄은 그대로 두고 값만 고친다 (버튼을 누르는 도중 줄이 바뀌지 않게).</summary>
+    /// <summary>
+    /// 목록을 다시 읽는다. 순서: 지금 쓰는 창(맨 앞) → 최근에 쓴 창 순 → 최소화된 창.
+    /// 기존 줄은 지우지 않고 자리만 옮겨 값만 고친다 (버튼을 누르는 도중 줄이 새로 생기지 않게).
+    /// </summary>
     void RefreshList()
     {
+        // EnumWindows 는 앞에 있는 창부터 준다
         var wins = WindowFitter.ListWindows();
+        wins = wins.Where(w => !w.Minimized).Concat(_settings.HideMinimized ? [] : wins.Where(w => w.Minimized)).ToList();
         var alive = wins.Select(w => w.Handle).ToHashSet();
         for (int i = _items.Count - 1; i >= 0; i--)
             if (!alive.Contains(_items[i].Handle)) _items.RemoveAt(i);
 
-        foreach (var w in wins)
+        for (int at = 0; at < wins.Count; at++)
         {
+            var w = wins[at];
             var item = _items.FirstOrDefault(x => x.Handle == w.Handle);
-            if (item == null) { item = new WinItem { Handle = w.Handle }; _items.Add(item); }
+            if (item == null) { item = new WinItem { Handle = w.Handle }; _items.Insert(at, item); }
+            else if (_items.IndexOf(item) is int cur && cur != at) _items.Move(cur, at);
+            item.IsActive = at == 0 && !w.Minimized;
             item.Title = w.Title;
             item.IsMinimized = w.Minimized;
             item.IsFitted = _fitter.IsFitted(w.Handle, _region);
@@ -375,6 +381,45 @@ public partial class PanelWindow : Window
             }
         }
         EmptyText.Visibility = _items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // 다른 창이 앞으로 오거나 최소화 · 복원되면 바로 다시 정렬 (3초 타이머만 기다리지 않게)
+    WinEventProc? _winEvent;
+    readonly List<IntPtr> _winHooks = new();
+    bool _refreshQueued;
+
+    void HookWindowEvents()
+    {
+        _winEvent = (_, _, h, idObject, _, _, _) =>
+        {
+            if (idObject != 0 || _refreshQueued) return;   // OBJID_WINDOW 만
+            _refreshQueued = true;
+            Dispatcher.BeginInvoke(() => { _refreshQueued = false; RefreshList(); }, DispatcherPriority.Background);
+        };
+        _winHooks.Add(SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, IntPtr.Zero, _winEvent, 0, 0, WINEVENT_OUTOFCONTEXT));
+        _winHooks.Add(SetWinEventHook(EVENT_SYSTEM_MINIMIZESTART, EVENT_SYSTEM_MINIMIZEEND, IntPtr.Zero, _winEvent, 0, 0, WINEVENT_OUTOFCONTEXT));
+        Closed += (_, _) => { foreach (var k in _winHooks) if (k != IntPtr.Zero) UnhookWinEvent(k); };
+    }
+
+    void OnHideMinClick(object sender, RoutedEventArgs e)
+    {
+        _settings.HideMinimized = !_settings.HideMinimized;
+        _settings.Save();
+        UpdateHideMinButton();
+        RefreshList();
+    }
+
+    void UpdateHideMinButton() =>
+        HideMinBtn.Content = _settings.HideMinimized ? "비활성 창 보이기" : "비활성 창 숨기기";
+
+    /// <summary>위로: 창을 맨 앞으로. 최소화돼 있으면 먼저 연다.</summary>
+    void OnTopClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Button)?.Tag is not WinItem item || !IsWindow(item.Handle)) return;
+        if (IsIconic(item.Handle)) ShowWindow(item.Handle, SW_RESTORE);
+        BringWindowToTop(item.Handle);
+        SetForegroundWindow(item.Handle);
+        RefreshList();
     }
 
     void OnRefreshClick(object sender, RoutedEventArgs e) => RefreshList();
@@ -422,36 +467,6 @@ public partial class PanelWindow : Window
             SetStatus("WAIT", $"\"{title}\" 창은 크기 제한이 있어 {actual.Width}×{actual.Height}까지만 맞춰졌습니다.");
         else
             SetStatus("OK", $"\"{title}\" 창을 {_region.Width}×{_region.Height}로 맞췄습니다.");
-    }
-
-    // ── 클릭해서 고르기 ──
-
-    void OnPickClick(object sender, RoutedEventArgs e)
-    {
-        if (_pickTimer.IsEnabled) { StopPick("고르기를 취소했습니다."); return; }
-        _pickStart = DateTime.Now;
-        PickBtn.Content = "취소";
-        SetStatus("WAIT", "맞출 창을 클릭하세요 (Esc 취소)");
-        _pickTimer.Start();
-    }
-
-    void PickTick()
-    {
-        var h = GetForegroundWindow();
-        if (WindowFitter.IsCandidate(h))
-        {
-            StopPick(null);
-            Fit(h, Shorten(GetTitle(h)));
-            RefreshList();
-        }
-        else if (DateTime.Now - _pickStart > PickTimeout) StopPick("시간이 지나 고르기를 취소했습니다.");
-    }
-
-    void StopPick(string? message)
-    {
-        _pickTimer.Stop();
-        PickBtn.Content = "창 고르기";
-        if (message != null) SetStatus("OK", message);
     }
 
     // ── 단축키 ──

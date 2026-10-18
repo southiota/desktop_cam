@@ -24,9 +24,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # .NET 런타임까지 같이 넣는다 → 받는 PC 에 따로 설치할 것이 없음
+      # .NET 런타임까지 넣은 실행 파일 하나 (처음 켤 때 임시 폴더에 풀림) → 폴더에는 exe · models · tools · 문서만
       - name: Publish
-        run: dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -o ${{ env.OUT }}
+        run: dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o ${{ env.OUT }}
 
       - name: ffmpeg (LGPL) · RNNoise model
         shell: pwsh
@@ -49,6 +49,8 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item README.md, LICENSE, THIRD-PARTY-NOTICES.md $env:OUT
+          New-Item -ItemType Directory "$env:OUT/licenses" -Force | Out-Null
+          Copy-Item src/DesktopCam/Fonts/OFL.txt "$env:OUT/licenses/OFL-PressStart2P.txt"
           Remove-Item "$env:OUT/*.pdb", "$env:OUT/ScreenRecorderLib.xml" -ErrorAction SilentlyContinue
 
       - name: Zip

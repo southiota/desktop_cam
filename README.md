@@ -4,15 +4,39 @@
 
 ![logo](brand/desktopcam-icon.svg)
 
+## 왜 만들었나
+
+### "화면이 녹화되는 위치에, 녹화해야 할 창을 딱 맞출 수 없나?"
+모니터 비율과 영상 비율이 달라서, 녹화할 때마다 영역 위치를 잡고 창 크기를 손으로 맞추는 게 매번 번거로웠습니다.
+**그래서 만들었습니다.** 녹화 영역을 HD·QHD 크기로 고정해 두고, **창 맞추기** 한 번이면 창이 그 영역에 딱 맞춰집니다. 녹화하는 중에도 됩니다.
+
+### "스크립트를 녹화 화면에 좀 띄울 수 없나?"
+대본을 다른 창에 띄워 두고 보면서 넘기려니 시선도 손도 바빴습니다.
+**그래서 넣었습니다.** 대본은 녹화 영역 위에 글자만 떠 있고 영상에는 찍히지 않습니다. **자동스크롤 [AI]**를 켜 두면 읽는 목소리를 듣고 다음 줄로 알아서 넘어갑니다.
+
+![Desktop CAM 화면: 왼쪽 위 녹화 영역(teal 테두리)에 창을 맞추고, 오른쪽 패널에서 녹화 · 영역 · 대본 · 창 맞추기 · 소리를 한눈에](docs/screenshot.webp)
+
+## 실행 환경
+
+| | 최소 | 권장 |
+| --- | --- | --- |
+| 운영체제 | Windows 10 버전 2004 (64비트) | Windows 11 |
+| 화면 | 녹화 영역 + 패널(약 470px)이 들어가는 크기. 720p 영역이면 1920×1080 모니터 | QHD 영역은 3440×1440 이상, HD 영역은 2560×1440 이상 |
+| 그래픽 | DirectX 11 | H.264 하드웨어 인코딩 (NVIDIA NVENC · AMD AMF · Intel Quick Sync) |
+| 메모리 | 4GB | 8GB 이상 (자동스크롤 [AI] 를 켜면 약 450MB 더 씀) |
+| 저장 공간 | 프로그램 약 210MB (+ 음성 모델 250MB) | 녹화용 여유 공간: QHD 60fps 기준 1분에 약 180MB |
+| 인터넷 | 없어도 됨 | 음성 모델을 처음 받을 때 한 번만 |
+
+- Windows 10 2004 보다 오래된 버전에서는 패널 · 대본 · 사용법 안내가 녹화에 같이 찍힙니다.
+- 하드웨어 인코딩이 없는 PC 에서는 CPU 로 인코딩하므로 높은 해상도 · 60fps 에서 프레임이 떨어질 수 있습니다.
+
 ## 설치 · 실행
 
 1. [Releases](../../releases/latest) 에서 `DesktopCAM-버전-win-x64.zip` 을 받아 원하는 곳에 풉니다.
-2. `DesktopCAM\DesktopCam.exe` 를 실행합니다. 따로 설치할 것은 없습니다 (.NET 런타임 포함).
+2. `DesktopCAM\DesktopCam.exe` 를 실행합니다. 따로 설치할 것은 없습니다 (.NET 런타임 포함, 처음 한 번은 켜지는 데 몇 초 더 걸립니다).
    - 처음 실행할 때 "Windows의 PC 보호" 가 뜨면 **추가 정보 → 실행** 을 누르세요 (서명하지 않은 프로그램이라 뜹니다).
    - 녹화가 시작되지 않으면 [Visual C++ 재배포 패키지 x64](https://aka.ms/vs/17/release/vc_redist.x64.exe) 를 설치하세요.
 3. 자동스크롤 [AI] 을 처음 켜면 한국어 음성 모델(약 83MB)을 받을지 묻습니다. 한 번만 받으면 됩니다.
-
-필요한 것: Windows 10 (2004 이후) 또는 11, 64비트.
 
 ## 화면 구성
 
@@ -27,7 +51,7 @@
 | 녹화 | REC · 경과 시간 · 저장 폴더 |
 | REC AREA | 720p/HD/QHD · 30/60fps · 녹화 밖 가림 · 위치 |
 | SCRIPT | 대본 불러오기·편집·프롬프트 복사, 보이기, 이전/다음 줄, 자동스크롤 [AI], 위치(위·아래·왼쪽·오른쪽), 글자 크기 |
-| WINDOW FIT | 창 목록. 맞추기 / 되돌리기, 최소화 / 열기, 창 고르기 |
+| WINDOW FIT | 창 목록 (지금 쓰는 창이 맨 위). 위로, 맞추기 / 되돌리기, 최소화 / 열기, 비활성(최소화된) 창 숨기기 |
 | AUDIO | 시스템 소리 · 마이크 장치, 실시간 음량, ON/OFF, 모니터(내 목소리 듣기) |
 
 ## 사용법 안내
@@ -124,7 +148,7 @@ tools/make_icon.py   로고·아이콘 생성 (픽셀 격자 16×16)
 brand/               로고 원본: desktopcam-icon.svg(바탕 포함) · desktopcam-mark.svg(바탕 없음) · .ico · 512px PNG
 ```
 
-빌드: `dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -o dist/DesktopCAM`
+빌드 (실행 파일 하나): `dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o dist/DesktopCAM`
 
 마이크 다듬기를 쓰려면 `dist/DesktopCAM/tools/` 에 [ffmpeg LGPL 빌드](https://github.com/BtbN/FFmpeg-Builds/releases)의 `ffmpeg.exe` 와 [cb.rnnn](https://github.com/GregorR/rnnoise-models) 을 넣습니다.
 

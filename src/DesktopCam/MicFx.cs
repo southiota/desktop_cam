@@ -89,7 +89,7 @@ public static class Tools
 {
     static IEnumerable<string> Dirs => new[]
     {
-        Path.Combine(AppContext.BaseDirectory, "tools"),
+        Path.Combine(App.ExeDir, "tools"),
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DesktopCAM", "tools"),
     };
 

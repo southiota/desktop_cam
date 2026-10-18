@@ -11,7 +11,7 @@ Desktop CAM 은 아래 라이브러리 · 도구 · 데이터를 함께 쓰거�
 | vosk-model-small-ko-0.22 (처음 쓸 때 받음) | 한국어 음성 모델 | Apache-2.0 | https://alphacephei.com/vosk/models |
 | FFmpeg, LGPL 빌드 (`tools/ffmpeg.exe`) | 마이크 다듬기 · 합치기 | LGPL (`tools/LICENSE.txt`) | https://ffmpeg.org · 빌드: https://github.com/BtbN/FFmpeg-Builds |
 | RNNoise 모델 cb.rnnn (`tools/cb.rnnn`) | AI 잡음 제거 | 저작권 대상 아님 (출처 README) | https://github.com/GregorR/rnnoise-models |
-| Press Start 2P | 픽셀 서체 | SIL OFL 1.1 (`Fonts/OFL.txt`) | https://fonts.google.com/specimen/Press+Start+2P |
+| Press Start 2P | 픽셀 서체 | SIL OFL 1.1 (`licenses/OFL-PressStart2P.txt`) | https://fonts.google.com/specimen/Press+Start+2P |
 | MinGW 런타임 (libgcc_s_seh-1, libstdc++-6, libwinpthread-1) | Vosk 가 씀 | GPL v3 + GCC 런타임 예외 · MIT/BSD | https://www.mingw-w64.org |
 
 FFmpeg 은 따로 실행하는 프로그램(`tools/ffmpeg.exe`)으로만 부르며 Desktop CAM 에 링크하지 않습니다. 다른 FFmpeg 빌드로 바꿔 넣어도 됩니다.

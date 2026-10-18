@@ -24,6 +24,7 @@ public class Settings
 
     // 마이크 모니터링: 녹화하지 않는 다른 출력 장치(헤드셋)로 내 목소리를 들려준다
     public bool MonitorEnabled { get; set; }
+    public bool HideMinimized { get; set; }           // 창 목록에서 최소화된 창 숨기기
     public string? MonitorDeviceId { get; set; }
     public string? MonitorDeviceName { get; set; }
 
