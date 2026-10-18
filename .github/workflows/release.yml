@@ -1,0 +1,72 @@
+# v 로 시작하는 태그(예: v0.5.0)를 올리면: 빌드 → ffmpeg · 잡음 제거 모델 넣기 → zip → Releases 에 올림.
+# 음성 모델(253MB)은 넣지 않는다. 프로그램이 처음 쓸 때 받는다.
+# Actions 탭에서 손으로 돌리면(workflow_dispatch) Releases 대신 실행 결과(Artifacts)에 zip 만 남긴다.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      OUT: out/DesktopCAM
+      FFMPEG_SERIES: '8.1'   # 마이크 필터를 확인한 버전. 없어지면 가장 새 LGPL 빌드
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # .NET 런타임까지 같이 넣는다 → 받는 PC 에 따로 설치할 것이 없음
+      - name: Publish
+        run: dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -o ${{ env.OUT }}
+
+      - name: ffmpeg (LGPL) · RNNoise model
+        shell: pwsh
+        run: |
+          $tools = "$env:OUT/tools"
+          New-Item -ItemType Directory $tools -Force | Out-Null
+          $rel = Invoke-RestMethod https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest -Headers @{ Authorization = "Bearer ${{ github.token }}" }
+          $zips = $rel.assets | Where-Object { $_.name -match '^ffmpeg-n[\d.]+-latest-win64-lgpl-[\d.]+\.zip$' }
+          $pick = ($zips | Where-Object { $_.name -like "ffmpeg-n$env:FFMPEG_SERIES-*" } | Select-Object -First 1)
+          if (-not $pick) { $pick = $zips | Sort-Object name | Select-Object -Last 1 }
+          Write-Host "ffmpeg: $($pick.name)"
+          Invoke-WebRequest $pick.browser_download_url -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip ffmpeg
+          $dir = Get-ChildItem ffmpeg -Directory | Select-Object -First 1
+          Copy-Item "$($dir.FullName)/bin/ffmpeg.exe" $tools
+          Copy-Item "$($dir.FullName)/LICENSE.txt" $tools
+          Invoke-WebRequest https://raw.githubusercontent.com/GregorR/rnnoise-models/master/conjoined-burgers-2018-08-28/cb.rnnn -OutFile "$tools/cb.rnnn"
+
+      - name: Docs · clean up
+        shell: pwsh
+        run: |
+          Copy-Item README.md, LICENSE, THIRD-PARTY-NOTICES.md $env:OUT
+          Remove-Item "$env:OUT/*.pdb", "$env:OUT/ScreenRecorderLib.xml" -ErrorAction SilentlyContinue
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          $name = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "dev-$("${{ github.sha }}".Substring(0,7))" }
+          Compress-Archive -Path $env:OUT -DestinationPath "DesktopCAM-$name-win-x64.zip"
+
+      - name: Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DesktopCAM-*.zip
+          generate_release_notes: true
+
+      - name: Artifact
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopCAM-win-x64
+          path: DesktopCAM-*.zip

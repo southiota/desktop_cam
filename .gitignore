@@ -1,0 +1,18 @@
+# 빌드 결과
+bin/
+obj/
+out/
+dist/
+*.user
+.vs/
+
+# 큰 파일: 배포 때 받거나 프로그램이 받는다
+models/
+tools/ffmpeg*
+*.rnnn
+*.zip
+
+# 개인 · 로컬
+.claude/
+demo/
+ReLegacy-Design-System/

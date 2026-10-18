@@ -1,0 +1,380 @@
+<Window x:Class="DesktopCam.PanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:DesktopCam"
+        Title="Desktop CAM" Icon="Assets/DesktopCam.ico"
+        Width="440" Height="1080"
+        WindowStyle="None" Background="{StaticResource Bg}"
+        ResizeMode="NoResize" ShowInTaskbar="True" Topmost="True"
+        FontFamily="{StaticResource KoFont}" FontSize="13" Foreground="{StaticResource Cream}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <!-- 작은 선택 버튼 · 작은 버튼 · ON/OFF -->
+        <Style x:Key="SegSm" TargetType="RadioButton" BasedOn="{StaticResource Seg}">
+            <Setter Property="MinHeight" Value="26"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="FontSize" Value="10"/>
+        </Style>
+        <Style x:Key="BtnSm" TargetType="Button" BasedOn="{StaticResource Btn}">
+            <Setter Property="MinHeight" Value="26"/>
+            <Setter Property="Padding" Value="7,0"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="OnOff" TargetType="Button" BasedOn="{StaticResource BtnSm}">
+            <Setter Property="FontFamily" Value="{DynamicResource PixelFont}"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="MinWidth" Value="46"/>
+            <Setter Property="MinHeight" Value="28"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="Tag" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource PixelFont}"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="Combo" TargetType="ComboBox" BasedOn="{StaticResource PixelCombo}">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="MinHeight" Value="28"/>
+        </Style>
+
+        <!-- 창 목록 한 줄: 제목 하나만 보이고, 프로그램·크기는 마우스를 올리면 -->
+        <DataTemplate x:Key="WinRow" DataType="{x:Type local:WinItem}">
+            <Border x:Name="Row" Background="{StaticResource BgRaised}" BorderBrush="Transparent"
+                    BorderThickness="2" Padding="8,2,2,2" Margin="0,0,0,4" ToolTip="{Binding Sub}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="Px" Width="8" Height="8" Margin="0,0,8,0" Background="{StaticResource Teal}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" Style="{StaticResource BtnSm}" Margin="6,0,0,0" MinWidth="62"
+                            Content="{Binding FitLabel}" Tag="{Binding}" Click="OnFitClick"/>
+                    <Button Grid.Column="3" Style="{StaticResource BtnSm}" Margin="4,0,0,0" MinWidth="50"
+                            Content="{Binding MinLabel}" Tag="{Binding}" Click="OnMinClick"/>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsFitted}" Value="True">
+                    <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource Yellow}"/>
+                    <Setter TargetName="Px" Property="Background" Value="{StaticResource Yellow}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsMinimized}" Value="True">
+                    <Setter TargetName="Row" Property="Opacity" Value="0.55"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- 불투명 창: 투명 창은 그릴 때마다 CPU 로 합성되므로 쓰지 않는다. 8px 그림자는 오버레이가 패널 뒤에 그린다 -->
+    <Border Background="{StaticResource Scanlines}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2">
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- 머리 -->
+                <RowDefinition Height="Auto"/>   <!-- 녹화 -->
+                <RowDefinition Height="Auto"/>   <!-- 녹화 영역 -->
+                <RowDefinition Height="Auto"/>   <!-- 대본 -->
+                <RowDefinition Height="*"/>      <!-- 창 맞추기: 남는 높이 전부 -->
+                <RowDefinition Height="Auto"/>   <!-- 소리 -->
+                <RowDefinition Height="Auto"/>   <!-- 알림 -->
+                <RowDefinition Height="Auto"/>   <!-- 마지막 메시지 -->
+                <RowDefinition Height="Auto"/>   <!-- 단축키 -->
+            </Grid.RowDefinitions>
+
+            <!-- 머리 칸: 로고 · 이름 · 상태 · 닫기. 끌면 녹화 영역과 패널이 함께 움직임 -->
+            <Border x:Name="Header" Background="{StaticResource BgPanel}" BorderBrush="{StaticResource TealDeep}"
+                    BorderThickness="2" Padding="6,4" Margin="0,0,4,8" Cursor="SizeAll"
+                    ToolTip="끌어서 녹화 영역 옮기기"
+                    MouseLeftButtonDown="OnHeaderDown" MouseMove="OnHeaderMove"
+                    MouseLeftButtonUp="OnHeaderUp" LostMouseCapture="OnHeaderLost">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Image Source="Assets/logo.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <TextBlock x:Name="Wordmark" FontFamily="{DynamicResource PixelFont}" FontSize="11" Text="desktop cam"/>
+                        <TextBlock x:Name="HeaderCursor" FontFamily="{DynamicResource PixelFont}" FontSize="11" Foreground="{StaticResource Yellow}" Text="_" Margin="2,0,0,0"/>
+                    </StackPanel>
+                    <!-- 상태 칩: READY teal · REC danger · PAUSE yellow -->
+                    <Border x:Name="StateChip" Grid.Column="2" Background="{StaticResource Teal}" Padding="6,4" VerticalAlignment="Center">
+                        <TextBlock x:Name="StateText" FontFamily="{DynamicResource PixelFont}" FontSize="9"
+                                   Foreground="{StaticResource OnAccent}" Text="READY"/>
+                    </Border>
+                    <Button Grid.Column="3" Style="{StaticResource IconBtn}" Content="X" Margin="6,0,0,0" MinHeight="24" MinWidth="24"
+                            FontSize="10" ToolTip="끄기 (녹화 중이면 저장을 마치고 끕니다)" Click="OnCloseClick"/>
+                </Grid>
+            </Border>
+
+            <!-- 녹화: 버튼 · 시간 · 저장 폴더 -->
+            <ContentControl x:Name="RecCard" Grid.Row="1" Style="{StaticResource Card}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="RecBtn" Style="{StaticResource RecBtn}" Width="50" Height="50" FontSize="11" Content="REC"
+                                Click="OnRecClick" ToolTip="녹화 시작 / 저장"/>
+                        <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="TimerText" FontFamily="{DynamicResource PixelFont}" FontSize="16" Text="00:00:00"/>
+                            <TextBlock x:Name="RecMeta" FontFamily="{StaticResource CodeFont}" FontSize="11"
+                                       Foreground="{StaticResource Muted}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <Button x:Name="PauseBtn" Grid.Column="2" Style="{StaticResource Btn}" Content="II" MinWidth="36" MinHeight="36"
+                                FontFamily="{DynamicResource PixelFont}" FontWeight="Normal" FontSize="10"
+                                IsEnabled="False" Click="OnPauseClick" ToolTip="잠깐 멈춤 / 이어서" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid x:Name="FolderRow" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="FolderText" FontFamily="{StaticResource CodeFont}" FontSize="11" Foreground="{StaticResource Muted}"
+                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        <Button x:Name="FolderBtn" Grid.Column="1" Style="{StaticResource BtnSm}" Content="변경" Margin="6,0,0,0"
+                                Click="OnFolderClick" ToolTip="저장 폴더 바꾸기"/>
+                        <Button Grid.Column="2" Style="{StaticResource BtnSm}" Content="열기" Margin="4,0,0,0"
+                                Click="OnOpenFolderClick" ToolTip="저장 폴더 열기"/>
+                    </Grid>
+                </StackPanel>
+            </ContentControl>
+
+            <!-- 녹화 영역: 해상도 · fps · 바깥 가림 · 위치 -->
+            <ContentControl x:Name="AreaCard" Grid.Row="2" Style="{StaticResource Card}" Margin="0,8,4,4">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Style="{StaticResource CardTitle}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>REC AREA</TextBlock>
+                        <Border BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Right">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="Fps30" GroupName="fps" Style="{StaticResource SegSm}" ToolTip="초당 30프레임" Checked="OnFpsChecked">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="30"/>
+                                        <TextBlock Text="fps" FontFamily="{StaticResource CodeFont}" FontSize="9" Opacity="0.8" Margin="2,0,0,0" VerticalAlignment="Bottom"/>
+                                    </StackPanel>
+                                </RadioButton>
+                                <Border Width="2" Background="{StaticResource Teal}"/>
+                                <RadioButton x:Name="Fps60" GroupName="fps" Style="{StaticResource SegSm}" ToolTip="초당 60프레임" Checked="OnFpsChecked">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="60"/>
+                                        <TextBlock Text="fps" FontFamily="{StaticResource CodeFont}" FontSize="9" Opacity="0.8" Margin="2,0,0,0" VerticalAlignment="Bottom"/>
+                                    </StackPanel>
+                                </RadioButton>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <!-- 해상도: 이름 아래 작은 글씨로 실제 크기 -->
+                    <Border BorderBrush="{StaticResource Teal}" BorderThickness="2" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <RadioButton x:Name="Res720Btn" GroupName="res" Style="{StaticResource SegSm}" Tag="720" Padding="0,0" Checked="OnPresetChecked">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="720p" VerticalAlignment="Center"/>
+                                    <TextBlock Text="1280×720" FontFamily="{StaticResource CodeFont}" FontSize="9" Opacity="0.8" VerticalAlignment="Center" Margin="5,1,0,0"/>
+                                </StackPanel>
+                            </RadioButton>
+                            <Border Grid.Column="1" Background="{StaticResource Teal}"/>
+                            <RadioButton x:Name="HdBtn" Grid.Column="2" GroupName="res" Style="{StaticResource SegSm}" Tag="HD" Padding="0,0" Checked="OnPresetChecked">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="HD" VerticalAlignment="Center"/>
+                                    <TextBlock Text="1920×1080" FontFamily="{StaticResource CodeFont}" FontSize="9" Opacity="0.8" VerticalAlignment="Center" Margin="5,1,0,0"/>
+                                </StackPanel>
+                            </RadioButton>
+                            <Border Grid.Column="3" Background="{StaticResource Teal}"/>
+                            <RadioButton x:Name="QhdBtn" Grid.Column="4" GroupName="res" Style="{StaticResource SegSm}" Tag="QHD" Padding="0,0" Checked="OnPresetChecked">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="QHD" VerticalAlignment="Center"/>
+                                    <TextBlock Text="2560×1440" FontFamily="{StaticResource CodeFont}" FontSize="9" Opacity="0.8" VerticalAlignment="Center" Margin="5,1,0,0"/>
+                                </StackPanel>
+                            </RadioButton>
+                        </Grid>
+                    </Border>
+                    <!-- 바깥 가림 · 위치 한 줄 -->
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource Label}" Text="밖 가림" Margin="0,0,8,0"/>
+                        <Slider x:Name="DimSlider" Grid.Column="1" Style="{StaticResource PixelSlider}" Minimum="0" Maximum="90"
+                                SmallChange="5" LargeChange="10" IsSnapToTickEnabled="True" TickFrequency="5"
+                                ValueChanged="OnDimChanged" ToolTip="녹화되지 않는 바깥 화면을 얼마나 어둡게 가릴지"/>
+                        <TextBlock x:Name="DimText" Grid.Column="2" Style="{StaticResource Tag}" FontSize="10" HorizontalAlignment="Right"/>
+                        <TextBlock x:Name="PosText" Grid.Column="3" Style="{StaticResource Tag}" FontSize="10" Foreground="{StaticResource Muted}"
+                                   Margin="12,0,6,0" ToolTip="녹화 영역 위치 (화면 왼쪽 위 기준). 머리 칸을 끌어서 옮깁니다"/>
+                        <Button x:Name="ResetPosBtn" Grid.Column="4" Style="{StaticResource BtnSm}" Content="0,0" MinWidth="40"
+                                FontFamily="{DynamicResource PixelFont}" FontWeight="Normal" FontSize="9"
+                                Click="OnResetPosition" ToolTip="녹화 영역을 화면 왼쪽 위 (0,0)으로"/>
+                    </Grid>
+                </StackPanel>
+            </ContentControl>
+
+            <!-- 대본: 자주 쓰는 것만. 불러오기·편집·위치·크기·넘김 기준은 톱니(편집 창)에서 -->
+            <ContentControl x:Name="ScriptCard" Grid.Row="3" Style="{StaticResource Card}" Margin="0,8,4,4">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Style="{StaticResource CardTitle}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>SCRIPT</TextBlock>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="ScriptShowBtn" Style="{StaticResource BtnSm}" MinWidth="72"
+                                    Click="OnScriptShow" ToolTip="대본 보이기 / 숨기기 (Ctrl+Alt+S)"/>
+                            <Button Style="{StaticResource GearBtn}" Margin="4,0,0,0" Click="OnScriptEditor"
+                                    ToolTip="대본 편집 · 불러오기 · 화면 위치와 크기 · 자동스크롤 기준"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource BtnSm}" Content="&lt;" MinWidth="28" FontFamily="{DynamicResource PixelFont}"
+                                FontWeight="Normal" FontSize="10" Click="OnScriptPrev" ToolTip="이전 줄 (Ctrl+Alt+B)"/>
+                        <TextBlock x:Name="ScriptCounter" Grid.Column="1" Style="{StaticResource Tag}" FontSize="10" Margin="8,0" Text="0 / 0"/>
+                        <Button Grid.Column="2" Style="{StaticResource BtnSm}" Content="&gt;" MinWidth="28" FontFamily="{DynamicResource PixelFont}"
+                                FontWeight="Normal" FontSize="10" Click="OnScriptNext" ToolTip="다음 줄 (Ctrl+Alt+N)"/>
+                        <Button x:Name="VoiceBtn" Grid.Column="4" Style="{StaticResource BtnSm}" MinWidth="92" Click="OnVoiceToggle"/>
+                    </Grid>
+                </StackPanel>
+            </ContentControl>
+
+            <!-- 창 맞추기: 남는 높이를 모두 목록에 -->
+            <ContentControl x:Name="FitCard" Grid.Row="4" Style="{StaticResource Card}" Margin="0,8,4,4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Style="{StaticResource CardTitle}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>WINDOW FIT</TextBlock>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="PickBtn" Style="{StaticResource BtnSm}" Content="창 고르기" Click="OnPickClick"
+                                    ToolTip="다음에 클릭한 창을 녹화 영역에 맞춥니다 (Esc 취소)"/>
+                            <Button Style="{StaticResource BtnSm}" Content="새로고침" Margin="4,0,0,0" Click="OnRefreshClick"/>
+                        </StackPanel>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <StackPanel>
+                            <ItemsControl x:Name="WinList" ItemTemplate="{StaticResource WinRow}" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="EmptyText" Style="{StaticResource Label}" Text="맞출 창이 없습니다." Visibility="Collapsed"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </ContentControl>
+
+            <!-- 소리: 장치 줄 아래에 음량 막대 · 상태 -->
+            <ContentControl x:Name="AudioCard" Grid.Row="5" Style="{StaticResource Card}" Margin="0,8,4,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="48"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.ColumnSpan="3" Margin="0,0,0,8">
+                        <TextBlock Style="{StaticResource CardTitle}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>AUDIO</TextBlock>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock x:Name="FxLabel" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" Padding="0,0,4,0" ToolTip="마이크 다듬기 프리셋"/>
+                            <Button x:Name="AudioGear" Style="{StaticResource GearBtn}" Click="OnAudioSettings"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Grid.Row="1" Style="{StaticResource Label}" Text="시스템"/>
+                    <ComboBox x:Name="SysCombo" Grid.Row="1" Grid.Column="1" Style="{StaticResource Combo}" SelectionChanged="OnSysDeviceChanged"
+                              ToolTip="녹화할 소리가 나오는 장치"/>
+                    <Button x:Name="SysToggle" Grid.Row="1" Grid.Column="2" Style="{StaticResource OnOff}" Margin="6,0,0,0"
+                            Click="OnSysToggle" ToolTip="녹화에 시스템 소리 넣기 / 빼기"/>
+                    <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="86"/>
+                        </Grid.ColumnDefinitions>
+                        <local:LevelMeter x:Name="SysMeter" Height="12" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="SysState" Grid.Column="1" Style="{StaticResource Tag}" Foreground="{StaticResource Teal}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <TextBlock Grid.Row="3" Style="{StaticResource Label}" Text="마이크" Margin="0,8,0,0"/>
+                    <ComboBox x:Name="MicCombo" Grid.Row="3" Grid.Column="1" Style="{StaticResource Combo}" Margin="0,8,0,0"
+                              SelectionChanged="OnMicDeviceChanged" ToolTip="목소리를 받을 입력 장치"/>
+                    <Button x:Name="MicToggle" Grid.Row="3" Grid.Column="2" Style="{StaticResource OnOff}" Margin="6,8,0,0"
+                            Click="OnMicToggle" ToolTip="녹화에 마이크 넣기 / 빼기"/>
+                    <Grid Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="86"/>
+                        </Grid.ColumnDefinitions>
+                        <local:LevelMeter x:Name="MicMeter" Height="12" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="MicState" Grid.Column="1" Style="{StaticResource Tag}" Foreground="{StaticResource Teal}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <!-- 모니터링: 내 목소리를 헤드셋으로 듣기 (녹화하는 장치와 다른 장치로만). 상태는 버튼 글자로 -->
+                    <TextBlock Grid.Row="5" Style="{StaticResource Label}" Text="모니터" Margin="0,8,0,0"/>
+                    <ComboBox x:Name="MonCombo" Grid.Row="5" Grid.Column="1" Style="{StaticResource Combo}" Margin="0,8,0,0"
+                              SelectionChanged="OnMonDeviceChanged"
+                              ToolTip="내 목소리를 들을 장치 (헤드셋). 녹화하는 시스템 소리 장치와 달라야 합니다"/>
+                    <Button x:Name="MonToggle" Grid.Row="5" Grid.Column="2" Style="{StaticResource OnOff}" Margin="6,8,0,0"
+                            Click="OnMonToggle"/>
+                </Grid>
+            </ContentControl>
+
+            <!-- 알림: 상태 표시만으로는 이유를 알 수 없는 것만 -->
+            <ItemsControl x:Name="Alerts" Grid.Row="6">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,8,4,0" Padding="8,5" BorderThickness="2" Background="{StaticResource Bg}"
+                                BorderBrush="{Binding Color}">
+                            <TextBlock Style="{StaticResource Body}" FontSize="12">
+                                <Run FontFamily="{DynamicResource PixelFont}" FontSize="9" Foreground="{Binding Color, Mode=OneWay}"
+                                     Text="{Binding Tag, Mode=OneWay}"/><Run Text="{Binding Message, Mode=OneWay}"/>
+                            </TextBlock>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- 마지막 동작 결과 (한 곳에만) -->
+            <TextBlock x:Name="StatusText" Grid.Row="7" FontSize="12" Margin="0,8,0,0"
+                       TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis" Visibility="Collapsed">
+                <Run x:Name="StatusTag" FontFamily="{DynamicResource PixelFont}" FontSize="9"/><Run x:Name="StatusMsg"/>
+            </TextBlock>
+
+            <!-- 단축키: 패널 안에서 이곳에만 -->
+            <TextBlock x:Name="ShortcutText" Grid.Row="8" FontFamily="{StaticResource CodeFont}" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,8,0,0">
+                <Run Foreground="{StaticResource Teal}" Text="Ctrl+Alt"/> + R 녹화 · P 멈춤 · F 맞추기 · M 최소화
+                <LineBreak/><Run Foreground="{StaticResource Teal}" Text="Ctrl+Alt"/> + S 대본 · N 다음 줄 · B 이전 줄
+            </TextBlock>
+        </Grid>
+    </Border>
+</Window>

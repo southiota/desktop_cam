@@ -1,0 +1,60 @@
+<Window x:Class="DesktopCam.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Desktop CAM Overlay"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" ShowActivated="False"
+        Left="0" Top="0" Width="100" Height="100"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <!-- 로고 글자: 같은 글자를 오른쪽 아래로 2px 밀어 그림자로 깐다 (흐림 없는 계단식 그림자) -->
+        <Style x:Key="Logo" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{DynamicResource PixelFont}"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </Window.Resources>
+
+    <Canvas x:Name="Root" IsHitTestVisible="False">
+        <!-- 녹화 영역 바깥을 덮는 어두운 면 (가운데가 뚫린 도형) -->
+        <Path x:Name="Shade">
+            <Path.Fill>
+                <SolidColorBrush x:Name="ShadeBrush" Color="{StaticResource BgColor}" Opacity="0.75"/>
+            </Path.Fill>
+        </Path>
+        <!-- 영역 테두리: 영역 바깥쪽에만 그려서 녹화에 찍히지 않음 -->
+        <Rectangle x:Name="Edge" Stroke="{StaticResource Teal}" StrokeThickness="6"/>
+        <!-- 패널 그림자: 패널 창 뒤에서 오른쪽 아래로 8px 밀린 teal-deep 면 -->
+        <Rectangle x:Name="PanelShadow" Fill="{StaticResource TealDeep}" Visibility="Collapsed"/>
+
+        <!-- 크레딧: 녹화 영역 바깥 왼쪽 아래. 로고 규칙대로 bg-panel 판 위에 > re:legacy_ -->
+        <Grid x:Name="Credit">
+            <Border Background="{StaticResource TealDeep}" Margin="4,4,-4,-4"/>
+            <Border Background="{StaticResource BgPanel}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="10,8,12,8">
+                <StackPanel Orientation="Horizontal">
+                    <!-- '>' teal + teal-deep 그림자 -->
+                    <Grid VerticalAlignment="Center" Margin="0,0,4,0">
+                        <TextBlock Style="{StaticResource Logo}" Text="&gt;" Foreground="{StaticResource TealDeep}" Margin="2,2,0,0"/>
+                        <TextBlock Style="{StaticResource Logo}" Text="&gt;" Foreground="{StaticResource Teal}" Margin="0,0,2,2"/>
+                    </Grid>
+                    <!-- 're:' yellow + orange 그림자 -->
+                    <Grid VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource Logo}" Text="re:" Foreground="{StaticResource Orange}" Margin="2,2,0,0"/>
+                        <TextBlock Style="{StaticResource Logo}" Text="re:" Foreground="{StaticResource Yellow}" Margin="0,0,2,2"/>
+                    </Grid>
+                    <!-- 'legacy' cream + teal 그림자 -->
+                    <Grid VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource Logo}" Text="legacy" Foreground="{StaticResource Teal}" Margin="2,2,0,0"/>
+                        <TextBlock Style="{StaticResource Logo}" Text="legacy" Foreground="{StaticResource Cream}" Margin="0,0,2,2"/>
+                    </Grid>
+                    <!-- '_' yellow 커서 (고정) -->
+                    <Grid VerticalAlignment="Center" Margin="2,0,0,0">
+                        <TextBlock Style="{StaticResource Logo}" Text="_" Foreground="{StaticResource Orange}" Margin="2,2,0,0"/>
+                        <TextBlock Style="{StaticResource Logo}" Text="_" Foreground="{StaticResource Yellow}" Margin="0,0,2,2"/>
+                    </Grid>
+                    <TextBlock Text="© 2026" FontFamily="{StaticResource CodeFont}" FontSize="11"
+                               Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="12,2,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Canvas>
+</Window>

@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>DesktopCam</AssemblyName>
+    <Version>0.5.0</Version>
+    <!-- ScreenRecorderLib 은 네이티브 코드를 포함하므로 x64 로 고정 -->
+    <Platforms>x64</Platforms>
+    <Platform>x64</Platform>
+    <PlatformTarget>x64</PlatformTarget>
+    <ApplicationIcon>Assets\DesktopCam.ico</ApplicationIcon>
+    <Product>Desktop CAM</Product>
+    <AssemblyTitle>Desktop CAM</AssemblyTitle>
+    <Description>유튜브용 HD·QHD 영역 녹화</Description>
+    <!-- 작은 UI 프로그램이므로 백그라운드 GC 스레드 없이, 영어 외 위성 리소스는 빼서 배포 크기 줄임 -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <Copyright>© 2026 &gt; re:legacy_</Copyright>
+  </PropertyGroup>
+
+  <!-- Fonts\ 폴더에 넣은 서체 파일(예: PressStart2P-Regular.ttf)은 실행 폴더로 복사된다 -->
+  <ItemGroup>
+    <None Include="Fonts\*.ttf;Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\DesktopCam.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <PackageReference Include="ScreenRecorderLib" Version="6.6.0" />
+    <PackageReference Include="Vosk" Version="0.3.38" />
+  </ItemGroup>
+
+</Project>

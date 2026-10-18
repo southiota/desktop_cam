@@ -1,0 +1,31 @@
+<Window x:Class="DesktopCam.HelpButtonWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Desktop CAM Help"
+        WindowStyle="None" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False" Topmost="True" ShowActivated="False" Background="{StaticResource Bg}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+    <!-- 녹화 영역 바깥 오른쪽 아래의 작은 사용법 버튼. 녹화에는 찍히지 않는다 -->
+    <Button x:Name="HelpBtn" Click="OnClick" Cursor="Hand" ToolTip="화면 위에 화살표로 사용법을 보여줍니다">
+        <Button.Template>
+            <ControlTemplate TargetType="Button">
+                <Border x:Name="b" Background="{StaticResource BgPanel}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="10,6">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Background="{StaticResource Yellow}" Width="18" Height="18" Margin="0,0,8,0">
+                            <TextBlock Text="?" FontFamily="{DynamicResource PixelFont}" FontSize="11" Foreground="{StaticResource OnAccent}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="1,1,0,0"/>
+                        </Border>
+                        <TextBlock x:Name="t" Text="사용법" FontFamily="{StaticResource KoFont}" FontSize="13" FontWeight="Bold"
+                                   Foreground="{StaticResource Cream}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Teal}"/>
+                        <Setter TargetName="t" Property="Foreground" Value="{StaticResource Yellow}"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Button.Template>
+    </Button>
+</Window>

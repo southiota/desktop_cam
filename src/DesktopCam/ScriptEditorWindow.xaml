@@ -1,0 +1,243 @@
+<Window x:Class="DesktopCam.ScriptEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:DesktopCam"
+        Title="대본 편집 · Desktop CAM" Icon="Assets/DesktopCam.ico"
+        Width="1040" Height="780" MinWidth="820" MinHeight="560"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip" Background="{StaticResource Bg}"
+        ShowInTaskbar="True" Topmost="True" WindowStartupLocation="CenterScreen"
+        FontFamily="{StaticResource KoFont}" FontSize="13" Foreground="{StaticResource Cream}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <Style x:Key="BtnSm" TargetType="Button" BasedOn="{StaticResource Btn}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Padding" Value="9,0"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="SegSm" TargetType="RadioButton" BasedOn="{StaticResource Seg}">
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="FontFamily" Value="{StaticResource KoFont}"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="Section" TargetType="TextBlock" BasedOn="{StaticResource CardTitle}">
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <!-- 편집 칸: 각진 테두리, 포커스되면 노란 테두리 -->
+        <Style x:Key="EditorBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource Bg}"/>
+            <Setter Property="Foreground" Value="{StaticResource Cream}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Yellow}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource Teal}"/>
+            <Setter Property="FontFamily" Value="D2Coding, Noto Sans KR, Malgun Gothic"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="10,8">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Teal}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Background="{StaticResource Scanlines}">
+        <Grid Margin="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 머리: 끌어서 옮기기 -->
+            <Border Background="{StaticResource BgPanel}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="8,5"
+                    Margin="0,0,0,10" MouseLeftButtonDown="OnHeaderDown" Cursor="SizeAll">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Foreground="{StaticResource Teal}" Text="&gt; "/>
+                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Text="SCRIPT EDITOR"/>
+                        <TextBlock x:Name="FileText" FontFamily="{StaticResource CodeFont}" FontSize="12" Foreground="{StaticResource Muted}" Margin="14,0,0,0"/>
+                        <TextBlock x:Name="DirtyMark" FontFamily="{DynamicResource PixelFont}" FontSize="10" Foreground="{StaticResource Yellow}"
+                                   Margin="8,0,0,0" Text="● 저장 안 됨" Visibility="Collapsed"/>
+                    </StackPanel>
+                    <Button Style="{StaticResource IconBtn}" Content="X" HorizontalAlignment="Right" MinHeight="24" MinWidth="24" FontSize="10"
+                            Click="OnCloseClick" ToolTip="닫기"/>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="340"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 왼쪽: 편집 -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <WrapPanel>
+                        <Button Style="{StaticResource BtnSm}" Content="새 대본" Click="OnNew" Margin="0,0,4,4"/>
+                        <Button Style="{StaticResource BtnSm}" Content="불러오기" Click="OnOpen" Margin="0,0,4,4"/>
+                        <Button Style="{StaticResource BtnSm}" Content="저장" Click="OnSave" Margin="0,0,4,4" ToolTip="Ctrl+S"/>
+                        <Button Style="{StaticResource BtnSm}" Content="다른 이름으로" Click="OnSaveAs" Margin="0,0,14,4"/>
+                        <Button Style="{StaticResource BtnSm}" Content="프롬프트 복사" Click="OnCopyPrompt" Margin="0,0,4,4"
+                                ToolTip="서술형 원고를 이 형식으로 다듬어 달라는 AI 프롬프트를 복사합니다. AI 채팅에 붙여 넣고 끝에 원고를 넣으세요"/>
+                        <Button Style="{StaticResource BtnSm}" Content="붙여넣어 바꾸기" Click="OnPasteReplace" Margin="0,0,4,4"
+                                ToolTip="AI 가 만든 대본을 클립보드에서 가져와 지금 내용과 바꿉니다 (코드 블록 표시 ``` 는 자동으로 뺌)"/>
+                    </WrapPanel>
+                    <WrapPanel Grid.Row="1" Margin="0,2,0,8">
+                        <TextBlock Style="{StaticResource Label}" Text="넣기" Margin="0,0,8,4"/>
+                        <Button Style="{StaticResource BtnSm}" Content="## 섹션" Click="OnInsertSection" Margin="0,0,4,4" ToolTip="이 줄 위에 섹션 이름 줄 넣기"/>
+                        <Button Style="{StaticResource BtnSm}" Content="**강조**" Click="OnInsertEmphasis" Margin="0,0,4,4" ToolTip="고른 글자를 노란색 강조로"/>
+                        <Button Style="{StaticResource BtnSm}" Content="&gt; 메모" Click="OnInsertCue" Margin="0,0,14,4" ToolTip="이 줄 위에 읽지 않는 연출 메모 넣기"/>
+                        <Button Style="{StaticResource BtnSm}" Content="긴 줄 나누기" Click="OnSplitLong" Margin="0,0,4,4"
+                                ToolTip="40자가 넘는 문장을 문장 끝 · 쉼표 · 띄어쓰기에서 나눕니다"/>
+                    </WrapPanel>
+                    <TextBox x:Name="Editor" Grid.Row="2" Style="{StaticResource EditorBox}" AcceptsReturn="True" AcceptsTab="False"
+                             TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" TextChanged="OnEditorChanged"/>
+                    <TextBlock x:Name="StatsText" Grid.Row="3" FontFamily="{StaticResource CodeFont}" FontSize="12"
+                               Foreground="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                </Grid>
+
+                <!-- 오른쪽: 줄 목록 · 화면 · 자동스크롤 -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <ContentControl Style="{StaticResource Card}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource Section}" ToolTip="줄을 누르면 그 줄로 이동합니다"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>LINES</TextBlock>
+                            <ScrollViewer x:Name="LineScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
+                                <StackPanel x:Name="LineList" Margin="0,0,4,0"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </ContentControl>
+
+                    <ContentControl Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,4,4">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>DISPLAY</TextBlock>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="44"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource Label}" Text="위치"/>
+                                <Border Grid.Column="1" BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="PosTop" GroupName="spos" Style="{StaticResource SegSm}" Content="위" Tag="Top" Checked="OnPos"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="PosBottom" GroupName="spos" Style="{StaticResource SegSm}" Content="아래" Tag="Bottom" Checked="OnPos"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="PosLeft" GroupName="spos" Style="{StaticResource SegSm}" Content="왼쪽" Tag="Left" Checked="OnPos"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="PosRight" GroupName="spos" Style="{StaticResource SegSm}" Content="오른쪽" Tag="Right" Checked="OnPos"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="44"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource Label}" Text="크기"/>
+                                <Button Grid.Column="1" Style="{StaticResource BtnSm}" Content="-" MinWidth="30" Click="OnSmaller"/>
+                                <TextBlock x:Name="ScaleText" Grid.Column="2" FontFamily="{DynamicResource PixelFont}" FontSize="10" Margin="8,0"
+                                           MinWidth="40" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <Button Grid.Column="3" Style="{StaticResource BtnSm}" Content="+" MinWidth="30" Click="OnBigger"/>
+                                <TextBlock Grid.Column="4" Style="{StaticResource Label}" Text="다음 줄" HorizontalAlignment="Right" Margin="0,0,8,0"/>
+                                <Border Grid.Column="5" BorderBrush="{StaticResource Teal}" BorderThickness="2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="Next0" GroupName="snext" Style="{StaticResource SegSm}" Content="0" Tag="0" Checked="OnNextCount"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="Next1" GroupName="snext" Style="{StaticResource SegSm}" Content="1" Tag="1" Checked="OnNextCount"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="Next2" GroupName="snext" Style="{StaticResource SegSm}" Content="2" Tag="2" Checked="OnNextCount"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <WrapPanel Margin="0,8,0,0">
+                                <TextBlock Style="{StaticResource Label}" Text="보이기" Width="44"/>
+                                <Button x:Name="ShowPrevBtn" Style="{StaticResource BtnSm}" Click="OnTogglePrev" Margin="0,0,4,0"/>
+                                <Button x:Name="ShowSectionBtn" Style="{StaticResource BtnSm}" Click="OnToggleSection" Margin="0,0,4,0"/>
+                                <Button x:Name="ShowCueBtn" Style="{StaticResource BtnSm}" Click="OnToggleCue"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </ContentControl>
+
+                    <ContentControl Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,4,4">
+                        <StackPanel>
+                            <Grid>
+                                <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>AUTO SCROLL [AI]</TextBlock>
+                                <Button x:Name="VoiceBtn" Style="{StaticResource BtnSm}" HorizontalAlignment="Right" VerticalAlignment="Top" MinWidth="54"
+                                        FontFamily="{DynamicResource PixelFont}" FontWeight="Normal" FontSize="10" Click="OnVoiceToggle"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="44"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource Label}" Text="넘김"/>
+                                <Border Grid.Column="1" BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="SensFast" GroupName="sens" Style="{StaticResource SegSm}" Content="빠르게" Tag="Fast" Checked="OnSensitivity"
+                                                     ToolTip="문장을 70% 정도 읽으면 넘어갑니다"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="SensNormal" GroupName="sens" Style="{StaticResource SegSm}" Content="보통" Tag="Normal" Checked="OnSensitivity"
+                                                     ToolTip="문장을 거의 다 읽으면(85%) 넘어갑니다"/>
+                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <RadioButton x:Name="SensStrict" GroupName="sens" Style="{StaticResource SegSm}" Content="정확하게" Tag="Strict" Checked="OnSensitivity"
+                                                     ToolTip="끝까지 읽고 말이 끊겨야 넘어갑니다. 잘못 넘어가는 일이 가장 적습니다"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <TextBlock Style="{StaticResource Label}" Text="들린 말" Margin="0,10,0,4"/>
+                            <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="8,6" MinHeight="44">
+                                <StackPanel>
+                                    <TextBlock x:Name="HeardText" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Cream}" Text="-"/>
+                                    <Grid Margin="0,6,0,0" Height="6">
+                                        <Border Background="{StaticResource BgRaised}"/>
+                                        <Border x:Name="HeardBar" Background="{StaticResource Teal}" HorizontalAlignment="Left" Width="0"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ContentControl>
+                </Grid>
+            </Grid>
+
+            <TextBlock x:Name="FooterText" Grid.Row="2" FontFamily="{StaticResource CodeFont}" FontSize="11" Foreground="{StaticResource Muted}"
+                       Margin="0,10,0,0" TextTrimming="CharacterEllipsis">
+                <Run Foreground="{StaticResource Teal}" Text="Ctrl+S"/> 저장 · 고치는 내용은 바로 화면에 반영 · 오른쪽 줄을 누르면 그 줄로 이동 · 한 줄 = 한 번에 읽을 문장
+            </TextBlock>
+        </Grid>
+    </Border>
+</Window>
