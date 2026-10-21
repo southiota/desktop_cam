@@ -4,9 +4,9 @@
         xmlns:local="clr-namespace:DesktopCam"
         Title="대본 편집 · Desktop CAM" Icon="Assets/DesktopCam.ico"
         Width="1040" Height="780" MinWidth="820" MinHeight="560"
-        WindowStyle="None" ResizeMode="CanResizeWithGrip" Background="{StaticResource Bg}"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip" Background="{DynamicResource Bg}"
         ShowInTaskbar="True" Topmost="True" WindowStartupLocation="CenterScreen"
-        FontFamily="{StaticResource KoFont}" FontSize="13" Foreground="{StaticResource Cream}"
+        FontFamily="{StaticResource KoFont}" FontSize="13" Foreground="{DynamicResource Cream}"
         UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
 
     <Window.Resources>
@@ -19,11 +19,11 @@
             <Setter Property="MinHeight" Value="28"/>
             <Setter Property="Padding" Value="10,0"/>
             <Setter Property="FontFamily" Value="{StaticResource KoFont}"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="{DynamicResource PxL}"/>
         </Style>
         <Style x:Key="Label" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style x:Key="Section" TargetType="TextBlock" BasedOn="{StaticResource CardTitle}">
@@ -31,21 +31,21 @@
         </Style>
         <!-- 편집 칸: 각진 테두리, 포커스되면 노란 테두리 -->
         <Style x:Key="EditorBox" TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource Bg}"/>
-            <Setter Property="Foreground" Value="{StaticResource Cream}"/>
-            <Setter Property="CaretBrush" Value="{StaticResource Yellow}"/>
-            <Setter Property="SelectionBrush" Value="{StaticResource Teal}"/>
+            <Setter Property="Background" Value="{DynamicResource Bg}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Cream}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource Yellow}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource Teal}"/>
             <Setter Property="FontFamily" Value="D2Coding, Noto Sans KR, Malgun Gothic"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="10,8">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Padding="10,8">
                             <ScrollViewer x:Name="PART_ContentHost"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Teal}"/>
+                                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Teal}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -54,7 +54,7 @@
         </Style>
     </Window.Resources>
 
-    <Border BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Background="{StaticResource Scanlines}">
+    <Border BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Background="{DynamicResource Scanlines}">
         <Grid Margin="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -63,17 +63,17 @@
             </Grid.RowDefinitions>
 
             <!-- 머리: 끌어서 옮기기 -->
-            <Border Background="{StaticResource BgPanel}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="8,5"
+            <Border Background="{DynamicResource BgPanel}" BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Padding="8,5"
                     Margin="0,0,0,10" MouseLeftButtonDown="OnHeaderDown" Cursor="SizeAll">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Foreground="{StaticResource Teal}" Text="&gt; "/>
-                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Text="SCRIPT EDITOR"/>
-                        <TextBlock x:Name="FileText" FontFamily="{StaticResource CodeFont}" FontSize="12" Foreground="{StaticResource Muted}" Margin="14,0,0,0"/>
-                        <TextBlock x:Name="DirtyMark" FontFamily="{DynamicResource PixelFont}" FontSize="10" Foreground="{StaticResource Yellow}"
+                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxM}" Foreground="{DynamicResource Teal}" Text="&gt; "/>
+                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxM}" Text="SCRIPT EDITOR"/>
+                        <TextBlock x:Name="FileText" FontFamily="{StaticResource CodeFont}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="14,0,0,0"/>
+                        <TextBlock x:Name="DirtyMark" FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxS}" Foreground="{DynamicResource Yellow}"
                                    Margin="8,0,0,0" Text="● 저장 안 됨" Visibility="Collapsed"/>
                     </StackPanel>
-                    <Button Style="{StaticResource IconBtn}" Content="X" HorizontalAlignment="Right" MinHeight="24" MinWidth="24" FontSize="10"
+                    <Button Style="{StaticResource IconBtn}" Content="X" HorizontalAlignment="Right" MinHeight="24" MinWidth="24" FontSize="{DynamicResource PxS}"
                             Click="OnCloseClick" ToolTip="닫기"/>
                 </Grid>
             </Border>
@@ -114,7 +114,7 @@
                     <TextBox x:Name="Editor" Grid.Row="2" Style="{StaticResource EditorBox}" AcceptsReturn="True" AcceptsTab="False"
                              TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" TextChanged="OnEditorChanged"/>
                     <TextBlock x:Name="StatsText" Grid.Row="3" FontFamily="{StaticResource CodeFont}" FontSize="12"
-                               Foreground="{StaticResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                               Foreground="{DynamicResource Muted}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 </Grid>
 
                 <!-- 오른쪽: 줄 목록 · 화면 · 자동스크롤 -->
@@ -131,7 +131,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Style="{StaticResource Section}" ToolTip="줄을 누르면 그 줄로 이동합니다"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>LINES</TextBlock>
+                            <TextBlock Style="{StaticResource Section}" ToolTip="줄을 누르면 그 줄로 이동합니다"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>LINES</TextBlock>
                             <ScrollViewer x:Name="LineScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False">
                                 <StackPanel x:Name="LineList" Margin="0,0,4,0"/>
                             </ScrollViewer>
@@ -140,21 +140,21 @@
 
                     <ContentControl Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,4,4">
                         <StackPanel>
-                            <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>DISPLAY</TextBlock>
+                            <TextBlock Style="{StaticResource Section}"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>DISPLAY</TextBlock>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="44"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Style="{StaticResource Label}" Text="위치"/>
-                                <Border Grid.Column="1" BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Left">
+                                <Border Grid.Column="1" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}" HorizontalAlignment="Left">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton x:Name="PosTop" GroupName="spos" Style="{StaticResource SegSm}" Content="위" Tag="Top" Checked="OnPos"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="PosBottom" GroupName="spos" Style="{StaticResource SegSm}" Content="아래" Tag="Bottom" Checked="OnPos"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="PosLeft" GroupName="spos" Style="{StaticResource SegSm}" Content="왼쪽" Tag="Left" Checked="OnPos"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="PosRight" GroupName="spos" Style="{StaticResource SegSm}" Content="오른쪽" Tag="Right" Checked="OnPos"/>
                                     </StackPanel>
                                 </Border>
@@ -170,16 +170,16 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Style="{StaticResource Label}" Text="크기"/>
                                 <Button Grid.Column="1" Style="{StaticResource BtnSm}" Content="-" MinWidth="30" Click="OnSmaller"/>
-                                <TextBlock x:Name="ScaleText" Grid.Column="2" FontFamily="{DynamicResource PixelFont}" FontSize="10" Margin="8,0"
+                                <TextBlock x:Name="ScaleText" Grid.Column="2" FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxS}" Margin="8,0"
                                            MinWidth="40" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <Button Grid.Column="3" Style="{StaticResource BtnSm}" Content="+" MinWidth="30" Click="OnBigger"/>
                                 <TextBlock Grid.Column="4" Style="{StaticResource Label}" Text="다음 줄" HorizontalAlignment="Right" Margin="0,0,8,0"/>
-                                <Border Grid.Column="5" BorderBrush="{StaticResource Teal}" BorderThickness="2">
+                                <Border Grid.Column="5" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton x:Name="Next0" GroupName="snext" Style="{StaticResource SegSm}" Content="0" Tag="0" Checked="OnNextCount"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="Next1" GroupName="snext" Style="{StaticResource SegSm}" Content="1" Tag="1" Checked="OnNextCount"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="Next2" GroupName="snext" Style="{StaticResource SegSm}" Content="2" Tag="2" Checked="OnNextCount"/>
                                     </StackPanel>
                                 </Border>
@@ -196,9 +196,9 @@
                     <ContentControl Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,4,4">
                         <StackPanel>
                             <Grid>
-                                <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>AUTO SCROLL [AI]</TextBlock>
+                                <TextBlock Style="{StaticResource Section}"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>AUTO SCROLL [AI]</TextBlock>
                                 <Button x:Name="VoiceBtn" Style="{StaticResource BtnSm}" HorizontalAlignment="Right" VerticalAlignment="Top" MinWidth="54"
-                                        FontFamily="{DynamicResource PixelFont}" FontWeight="Normal" FontSize="10" Click="OnVoiceToggle"/>
+                                        FontFamily="{DynamicResource PixelFont}" FontWeight="Normal" FontSize="{DynamicResource PxS}" Click="OnVoiceToggle"/>
                             </Grid>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -206,26 +206,26 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Style="{StaticResource Label}" Text="넘김"/>
-                                <Border Grid.Column="1" BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Left">
+                                <Border Grid.Column="1" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}" HorizontalAlignment="Left">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton x:Name="SensFast" GroupName="sens" Style="{StaticResource SegSm}" Content="빠르게" Tag="Fast" Checked="OnSensitivity"
                                                      ToolTip="문장을 70% 정도 읽으면 넘어갑니다"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="SensNormal" GroupName="sens" Style="{StaticResource SegSm}" Content="보통" Tag="Normal" Checked="OnSensitivity"
                                                      ToolTip="문장을 거의 다 읽으면(85%) 넘어갑니다"/>
-                                        <Border Width="2" Background="{StaticResource Teal}"/>
+                                        <Border Width="2" Background="{DynamicResource Edge}"/>
                                         <RadioButton x:Name="SensStrict" GroupName="sens" Style="{StaticResource SegSm}" Content="정확하게" Tag="Strict" Checked="OnSensitivity"
                                                      ToolTip="끝까지 읽고 말이 끊겨야 넘어갑니다. 잘못 넘어가는 일이 가장 적습니다"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>
                             <TextBlock Style="{StaticResource Label}" Text="들린 말" Margin="0,10,0,4"/>
-                            <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="8,6" MinHeight="44">
+                            <Border Background="{DynamicResource Bg}" BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Padding="8,6" MinHeight="44">
                                 <StackPanel>
-                                    <TextBlock x:Name="HeardText" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource Cream}" Text="-"/>
+                                    <TextBlock x:Name="HeardText" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource Cream}" Text="-"/>
                                     <Grid Margin="0,6,0,0" Height="6">
-                                        <Border Background="{StaticResource BgRaised}"/>
-                                        <Border x:Name="HeardBar" Background="{StaticResource Teal}" HorizontalAlignment="Left" Width="0"/>
+                                        <Border Background="{DynamicResource BgRaised}"/>
+                                        <Border x:Name="HeardBar" Background="{DynamicResource Teal}" HorizontalAlignment="Left" Width="0"/>
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -234,9 +234,9 @@
                 </Grid>
             </Grid>
 
-            <TextBlock x:Name="FooterText" Grid.Row="2" FontFamily="{StaticResource CodeFont}" FontSize="11" Foreground="{StaticResource Muted}"
+            <TextBlock x:Name="FooterText" Grid.Row="2" FontFamily="{StaticResource CodeFont}" FontSize="11" Foreground="{DynamicResource Muted}"
                        Margin="0,10,0,0" TextTrimming="CharacterEllipsis">
-                <Run Foreground="{StaticResource Teal}" Text="Ctrl+S"/> 저장 · 고치는 내용은 바로 화면에 반영 · 오른쪽 줄을 누르면 그 줄로 이동 · 한 줄 = 한 번에 읽을 문장
+                <Run Foreground="{DynamicResource Teal}" Text="Ctrl+S"/> 저장 · 고치는 내용은 바로 화면에 반영 · 오른쪽 줄을 누르면 그 줄로 이동 · 한 줄 = 한 번에 읽을 문장
             </TextBlock>
         </Grid>
     </Border>

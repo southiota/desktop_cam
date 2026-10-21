@@ -1,0 +1,59 @@
+<!-- 심플 테마: 차분한 단색 바탕, 얇은 테두리, 일반 서체(얇은 굵기), 강조색은 파랑 하나.
+     녹화 빨강 · 경고 노랑처럼 뜻이 있는 상태색은 그대로 둔다. 키 이름은 Signature.xaml 과 같다. -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- 바탕 · 글자 -->
+    <Color x:Key="BgColor">#17191D</Color>
+    <SolidColorBrush x:Key="Bg" Color="#17191D"/>
+    <SolidColorBrush x:Key="BgPanel" Color="#1F2227"/>
+    <SolidColorBrush x:Key="BgRaised" Color="#2A2E35"/>
+    <SolidColorBrush x:Key="Cream" Color="#E6E8EC"/>
+    <SolidColorBrush x:Key="Muted" Color="#A6E6E8EC"/>
+    <!-- 강조 · 상태: Teal 자리는 차분한 파랑 하나, 나머지는 뜻 있는 상태색 -->
+    <SolidColorBrush x:Key="Yellow" Color="#E9C46A"/>
+    <SolidColorBrush x:Key="Orange" Color="#D8794F"/>
+    <SolidColorBrush x:Key="Teal" Color="#7DAEE8"/>
+    <SolidColorBrush x:Key="TealDeep" Color="#30343C"/>
+    <SolidColorBrush x:Key="Danger" Color="#F07167"/>
+    <SolidColorBrush x:Key="OnAccent" Color="#17191D"/>
+
+    <!-- 역할 색: 테두리는 얇은 회색, 밀어낸 그림자 없음 -->
+    <SolidColorBrush x:Key="Edge" Color="#3A3F48"/>
+    <Thickness x:Key="EdgeW">1</Thickness>
+    <SolidColorBrush x:Key="CardShadow" Color="Transparent"/>
+    <SolidColorBrush x:Key="Hover" Color="#7DAEE8"/>
+    <SolidColorBrush x:Key="RecFace" Color="#E5534B"/>
+    <SolidColorBrush x:Key="RecShadow" Color="Transparent"/>
+    <SolidColorBrush x:Key="RecText" Color="#FFFFFF"/>
+    <FontWeight x:Key="BtnWeight">Normal</FontWeight>
+
+    <!-- 스크롤바: 강조 파랑과 겹치지 않는 밝은 회색 -->
+    <SolidColorBrush x:Key="ScrollTrack" Color="#101114"/>
+    <SolidColorBrush x:Key="ScrollEdge" Color="#353A42"/>
+    <SolidColorBrush x:Key="ScrollThumb" Color="#7E848F"/>
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="#A3A9B3"/>
+    <SolidColorBrush x:Key="ScrollThumbDrag" Color="#CDD1D8"/>
+    <SolidColorBrush x:Key="ScrollGrip" Color="#17191D"/>
+    <SolidColorBrush x:Key="ScrollArrowBg" Color="#1F2227"/>
+
+    <!-- 서체: 픽셀 서체 대신 얇은 일반 서체. 픽셀 서체보다 작아 보이므로 크기를 조금 키운다 -->
+    <FontFamily x:Key="PixelFont">Segoe UI Semilight, Malgun Gothic Semilight, Malgun Gothic</FontFamily>
+    <sys:Double x:Key="PxXS">11</sys:Double>
+    <sys:Double x:Key="PxS">12</sys:Double>
+    <sys:Double x:Key="PxM">13</sys:Double>
+    <sys:Double x:Key="PxL">13</sys:Double>
+    <sys:Double x:Key="PxXL">15</sys:Double>
+    <sys:Double x:Key="PxXXL">20</sys:Double>
+    <!-- 패널의 작은 글자 (자리별): 자리가 남는 곳만 키운다. 창 목록 · 해상도 큰 글자 · 장치 목록은 꽉 차서 그대로 -->
+    <sys:Double x:Key="TxTitle">14</sys:Double>
+    <sys:Double x:Key="TxHead">13</sys:Double>
+    <sys:Double x:Key="TxMeta">13</sys:Double>
+    <sys:Double x:Key="TxUnit">11</sys:Double>
+    <sys:Double x:Key="TxNum">13</sys:Double>
+    <sys:Double x:Key="TxState">13</sys:Double>
+    <sys:Double x:Key="TxKeys">13</sys:Double>
+
+    <!-- 주사선 없이 단색 -->
+    <SolidColorBrush x:Key="Scanlines" Color="#17191D"/>
+</ResourceDictionary>

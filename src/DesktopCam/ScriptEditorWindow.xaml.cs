@@ -20,7 +20,8 @@ public partial class ScriptEditorWindow : Window
     readonly PanelWindow _panel;
     readonly Settings _s;
     readonly DispatcherTimer _parseTimer = new() { Interval = TimeSpan.FromMilliseconds(300) };
-    readonly Brush _teal, _yellow, _danger, _muted, _cream, _raised, _panelBg;
+    Brush _teal = Brushes.Transparent, _yellow = Brushes.Transparent, _danger = Brushes.Transparent, _muted = Brushes.Transparent,
+          _cream = Brushes.Transparent, _raised = Brushes.Transparent, _panelBg = Brushes.Transparent;   // 테마가 바뀌면 다시 가져온다
     string? _path;
     bool _dirty, _loading, _ready;
     List<ScriptLine> _parsed = new();
@@ -30,13 +31,7 @@ public partial class ScriptEditorWindow : Window
         _panel = panel;
         _s = settings;
         InitializeComponent();
-        _teal = (Brush)FindResource("Teal");
-        _yellow = (Brush)FindResource("Yellow");
-        _danger = (Brush)FindResource("Danger");
-        _muted = (Brush)FindResource("Muted");
-        _cream = (Brush)FindResource("Cream");
-        _raised = (Brush)FindResource("BgRaised");
-        _panelBg = (Brush)FindResource("BgPanel");
+        LoadBrushes();
 
         (_s.ScriptPos switch { "Bottom" => PosBottom, "Left" => PosLeft, "Right" => PosRight, _ => PosTop }).IsChecked = true;
         (_s.ScriptNextCount switch { 0 => Next0, 1 => Next1, _ => Next2 }).IsChecked = true;
@@ -47,12 +42,14 @@ public partial class ScriptEditorWindow : Window
         _parseTimer.Tick += (_, _) => { _parseTimer.Stop(); ApplyEdits(); };
         _panel.ScriptPositionChanged += OnPanelLineChanged;
         _panel.HeardUpdate += OnHeardUpdate;
+        Theme.Changed += OnThemeChanged;
         PreviewKeyDown += OnKey;
         Closing += OnClosingWindow;
         Closed += (_, _) =>
         {
             _panel.ScriptPositionChanged -= OnPanelLineChanged;
             _panel.HeardUpdate -= OnHeardUpdate;
+            Theme.Changed -= OnThemeChanged;
         };
         SourceInitialized += (_, _) =>
         {
@@ -62,6 +59,27 @@ public partial class ScriptEditorWindow : Window
         LoadFile(_s.ScriptPath);
         _ready = true;
         Loaded += (_, _) => ClipCheck.Run(this, "대본 편집");
+    }
+
+    void LoadBrushes()
+    {
+        _teal = (Brush)FindResource("Teal");
+        _yellow = (Brush)FindResource("Yellow");
+        _danger = (Brush)FindResource("Danger");
+        _muted = (Brush)FindResource("Muted");
+        _cream = (Brush)FindResource("Cream");
+        _raised = (Brush)FindResource("BgRaised");
+        _panelBg = (Brush)FindResource("BgPanel");
+    }
+
+    /// <summary>테마가 바뀌면 코드에서 칠한 색을 다시 칠한다 (줄 목록도 다시 그림).</summary>
+    void OnThemeChanged()
+    {
+        LoadBrushes();
+        UpdateDisplayButtons();
+        UpdateVoiceButton();
+        RenderStats();
+        RenderLineList();
     }
 
     // ── 파일 ──

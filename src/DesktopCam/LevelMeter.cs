@@ -16,6 +16,9 @@ public class LevelMeter : FrameworkElement
     static Pen? _edge;
     static Brush? _gaps;
 
+    /// <summary>테마가 바뀌면 다음 그리기 때 색을 다시 가져오게 한다 (UI 스레드).</summary>
+    public static void ResetBrushes() => _bg = null;
+
     static void EnsureBrushes()
     {
         if (_bg != null) return;

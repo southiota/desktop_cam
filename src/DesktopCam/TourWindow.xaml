@@ -4,24 +4,24 @@
         Title="Desktop CAM 사용법"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
-        FontFamily="{StaticResource KoFont}" Foreground="{StaticResource Cream}"
+        FontFamily="{StaticResource KoFont}" Foreground="{DynamicResource Cream}"
         UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display"
         MouseLeftButtonDown="OnClick">
-    <!-- 화면 전체 안내: 모든 칸을 한꺼번에 밝히고, 칸마다 짧은 설명 상자에서 화살표로 가리킨다. 아무 곳이나 누르거나 Esc 로 닫는다 -->
+    <!-- 화면 전체 안내: 모든 칸을 한꺼번에 밝히고 짝 색 네모를 두른 뒤, 녹화 영역 안 설명 상자에서 화살표로 가리킨다. 아무 곳이나 누르거나 Esc 로 닫는다 -->
     <Canvas x:Name="Root">
         <Path x:Name="Dim">
             <Path.Fill>
-                <SolidColorBrush Color="{StaticResource BgColor}" Opacity="0.62"/>
+                <SolidColorBrush Color="{DynamicResource BgColor}" Opacity="0.62"/>
             </Path.Fill>
         </Path>
-        <Canvas x:Name="Marks" IsHitTestVisible="False"/>   <!-- 노란 테두리 · 화살표 -->
+        <Canvas x:Name="Marks" IsHitTestVisible="False"/>   <!-- 짝 색 네모 · 화살표 -->
         <Canvas x:Name="Notes" IsHitTestVisible="False"/>   <!-- 설명 상자 -->
 
         <!-- 맨 위 가운데: 닫는 법 -->
-        <Border x:Name="Hint" Background="{StaticResource Yellow}" Padding="14,7">
+        <Border x:Name="Hint" Background="{DynamicResource Yellow}" Padding="14,7">
             <StackPanel Orientation="Horizontal">
-                <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Foreground="{StaticResource OnAccent}" Text="HOW TO" VerticalAlignment="Center"/>
-                <TextBlock FontSize="13" FontWeight="Bold" Foreground="{StaticResource OnAccent}" Margin="12,0,0,0" Padding="0,0,8,0" VerticalAlignment="Center"
+                <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxM}" Foreground="{DynamicResource OnAccent}" Text="HOW TO" VerticalAlignment="Center"/>
+                <TextBlock FontSize="13" FontWeight="Bold" Foreground="{DynamicResource OnAccent}" Margin="12,0,0,0" Padding="0,0,8,0" VerticalAlignment="Center"
                            Text="아무 곳이나 누르거나 Esc 를 누르면 닫힙니다"/>
             </StackPanel>
         </Border>

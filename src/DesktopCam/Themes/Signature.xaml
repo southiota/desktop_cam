@@ -1,0 +1,67 @@
+<!-- 시그니처 테마: Re:Legacy 디자인 시스템 그대로 (픽셀 서체 · 주사선 · teal / 노랑 / 빨강).
+     키 이름은 두 테마가 같다. 모든 창은 이 키들을 DynamicResource 로 써서 실행 중에 테마를 바꿀 수 있다 (Theme.cs). -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- 바탕 · 글자 -->
+    <Color x:Key="BgColor">#14122B</Color>
+    <SolidColorBrush x:Key="Bg" Color="#14122B"/>
+    <SolidColorBrush x:Key="BgPanel" Color="#221F45"/>
+    <SolidColorBrush x:Key="BgRaised" Color="#2D2959"/>
+    <SolidColorBrush x:Key="Cream" Color="#F4F1E8"/>
+    <SolidColorBrush x:Key="Muted" Color="#BFF4F1E8"/>
+    <!-- 강조 · 상태 (Teal = 대기 · 켜짐, Yellow = 경고 · 맞춘 창, Danger = 녹화 · 꺼짐) -->
+    <SolidColorBrush x:Key="Yellow" Color="#FFD23F"/>
+    <SolidColorBrush x:Key="Orange" Color="#E4572E"/>
+    <SolidColorBrush x:Key="Teal" Color="#3BCEAC"/>
+    <SolidColorBrush x:Key="TealDeep" Color="#1F7A68"/>
+    <SolidColorBrush x:Key="Danger" Color="#FF8460"/>
+    <SolidColorBrush x:Key="OnAccent" Color="#14122B"/>
+
+    <!-- 역할 색: 카드 · 버튼 테두리, 밀어낸 그림자, 마우스 올림 글자, 녹화 버튼 -->
+    <SolidColorBrush x:Key="Edge" Color="#3BCEAC"/>
+    <Thickness x:Key="EdgeW">2</Thickness>
+    <SolidColorBrush x:Key="CardShadow" Color="#1F7A68"/>
+    <SolidColorBrush x:Key="Hover" Color="#FFD23F"/>
+    <SolidColorBrush x:Key="RecFace" Color="#FFD23F"/>
+    <SolidColorBrush x:Key="RecShadow" Color="#E4572E"/>
+    <SolidColorBrush x:Key="RecText" Color="#14122B"/>
+    <FontWeight x:Key="BtnWeight">Bold</FontWeight>
+
+    <!-- 스크롤바: 다른 칸과 헷갈리지 않게 따로 라벤더 색 -->
+    <SolidColorBrush x:Key="ScrollTrack" Color="#0B0A1C"/>
+    <SolidColorBrush x:Key="ScrollEdge" Color="#4B4485"/>
+    <SolidColorBrush x:Key="ScrollThumb" Color="#8F80F0"/>
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="#AFA3FF"/>
+    <SolidColorBrush x:Key="ScrollThumbDrag" Color="#D2CBFF"/>
+    <SolidColorBrush x:Key="ScrollGrip" Color="#14122B"/>
+    <SolidColorBrush x:Key="ScrollArrowBg" Color="#221F45"/>
+
+    <!-- 서체: PixelFont 는 Fonts\PressStart2P-Regular.ttf 가 있으면 Theme.cs 가 바꿔 끼운다 -->
+    <FontFamily x:Key="PixelFont">Consolas</FontFamily>
+    <sys:Double x:Key="PxXS">9</sys:Double>
+    <sys:Double x:Key="PxS">10</sys:Double>
+    <sys:Double x:Key="PxM">11</sys:Double>
+    <sys:Double x:Key="PxL">12</sys:Double>
+    <sys:Double x:Key="PxXL">14</sys:Double>
+    <sys:Double x:Key="PxXXL">16</sys:Double>
+    <!-- 패널의 작은 글자 (자리별). 시그니처는 원래 크기 그대로, 심플만 여유 있는 곳을 키운다 -->
+    <sys:Double x:Key="TxTitle">10</sys:Double>   <!-- 칸 제목 > REC AREA … (= PxS) -->
+    <sys:Double x:Key="TxHead">9</sys:Double>     <!-- 머리 칸 % · READY 칩 (= PxXS) -->
+    <sys:Double x:Key="TxMeta">11</sys:Double>    <!-- 녹화 정보 줄 · 저장 경로 -->
+    <sys:Double x:Key="TxUnit">9</sys:Double>     <!-- fps 단위 · 해상도 버튼 안 작은 크기 글자 -->
+    <sys:Double x:Key="TxNum">10</sys:Double>     <!-- 밝기 % · 위치 · 대본 줄 번호 (= PxS) -->
+    <sys:Double x:Key="TxState">9</sys:Double>    <!-- 소리 상태 [ OK ] (= PxXS) -->
+    <sys:Double x:Key="TxKeys">11</sys:Double>    <!-- 맨 아래 단축키 안내 -->
+
+    <!-- 패널 배경 주사선: 2px 선 + 3px 간격 -->
+    <DrawingBrush x:Key="Scanlines" TileMode="Tile" Viewport="0,0,4,5" ViewportUnits="Absolute"
+                  Viewbox="0,0,4,5" ViewboxUnits="Absolute" Stretch="None">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#14122B" Geometry="M0,0 H4 V5 H0 Z"/>
+                <GeometryDrawing Brush="#09FFFFFF" Geometry="M0,0 H4 V2 H0 Z"/>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+</ResourceDictionary>

@@ -37,6 +37,19 @@ public partial class ScriptWindow : Window
             if (!ShowInCaptureForTesting) SetWindowDisplayAffinity(h, WDA_EXCLUDEFROMCAPTURE);
         };
 
+        ApplyColors();
+        Theme.Changed += OnThemeChanged;
+        Closed += (_, _) => Theme.Changed -= OnThemeChanged;
+        PrevLine.Opacity = 0.5;
+        NextLine1.Opacity = 0.8;
+        NextLine2.Opacity = 0.55;
+        CurLine.Bold = true;
+        ApplySizes();
+    }
+
+    /// <summary>글자 색: 보통 cream, 강조 yellow, 읽은 부분 · 섹션 teal (테마 색을 따른다).</summary>
+    void ApplyColors()
+    {
         var cream = (Brush)FindResource("Cream");
         var yellow = (Brush)FindResource("Yellow");
         var teal = (Brush)FindResource("Teal");
@@ -48,11 +61,12 @@ public partial class ScriptWindow : Window
         }
         SectionText.Fill = teal;
         CueText.Fill = yellow;
-        PrevLine.Opacity = 0.5;
-        NextLine1.Opacity = 0.8;
-        NextLine2.Opacity = 0.55;
-        CurLine.Bold = true;
-        ApplySizes();
+    }
+
+    void OnThemeChanged()
+    {
+        ApplyColors();
+        foreach (var t in new[] { SectionText, PrevLine, CueText, CurLine, NextLine1, NextLine2 }) t.Refresh();
     }
 
     /// <summary>녹화 영역(실제 픽셀) 안에 놓는다. 위·아래는 가운데 정렬 폭 70%, 왼쪽·오른쪽은 세로 가운데 폭 32%.</summary>

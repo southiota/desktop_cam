@@ -19,7 +19,10 @@ public partial class AudioSettingsWindow : Window
     readonly PanelWindow _panel;
     readonly Settings _s;
     MicFx Fx => _s.MicFx;
-    readonly Brush _teal, _muted, _danger;
+    // 색은 그때그때 찾는다 (테마를 바꾸면 새 색이 나오게). 자주 불리지 않으므로 비용은 무시할 만하다
+    Brush _teal => (Brush)FindResource("Teal");
+    Brush _muted => (Brush)FindResource("Muted");
+    Brush _danger => (Brush)FindResource("Danger");
     bool _loading;
     string? _rawWav, _fxWav, _fxWavFor;
     WasapiOut? _player;
@@ -29,16 +32,16 @@ public partial class AudioSettingsWindow : Window
         _panel = panel;
         _s = settings;
         InitializeComponent();
-        _teal = (Brush)FindResource("Teal");
-        _muted = (Brush)FindResource("Muted");
-        _danger = (Brush)FindResource("Danger");
 
         foreach (var (key, name, tip) in MicFx.Presets)
         {
             var rb = new RadioButton { Content = name, Tag = key, GroupName = "preset", ToolTip = tip, Margin = new Thickness(0, 0, 4, 4),
                                        Style = (Style)FindResource("SegSm"), BorderThickness = new Thickness(0) };
             rb.Checked += OnPreset;
-            PresetPanel.Children.Add(new Border { BorderBrush = _teal, BorderThickness = new Thickness(2), Margin = new Thickness(0, 0, 4, 4), Child = rb });
+            var box = new Border { Margin = new Thickness(0, 0, 4, 4), Child = rb };
+            box.SetResourceReference(Border.BorderBrushProperty, "Edge");
+            box.SetResourceReference(Border.BorderThicknessProperty, "EdgeW");
+            PresetPanel.Children.Add(box);
         }
         LoadValues();
         UpdateBroadcast();
@@ -46,12 +49,13 @@ public partial class AudioSettingsWindow : Window
             ? $"다듬기는 녹화가 끝난 뒤 적용됩니다 (영상은 그대로, 소리만 새로). 1시간 녹화면 3~4분쯤 걸립니다. 모니터(헤드셋)와 자동스크롤에는 원음이 쓰입니다."
             : "ffmpeg.exe 가 없어 다듬기를 쓸 수 없습니다. 프로그램 폴더의 tools 에 넣어 주세요.";
         ToolText.Foreground = Tools.Ffmpeg != null ? _muted : _danger;
+        Theme.Changed += OnThemeChanged;
 
         SourceInitialized += (_, _) =>
         {
             if (!ShowInCaptureForTesting) SetWindowDisplayAffinity(new WindowInteropHelper(this).Handle, WDA_EXCLUDEFROMCAPTURE);
         };
-        Closed += (_, _) => { StopPlayer(); TryDelete(_rawWav); TryDelete(_fxWav); };
+        Closed += (_, _) => { Theme.Changed -= OnThemeChanged; StopPlayer(); TryDelete(_rawWav); TryDelete(_fxWav); };
         Loaded += (_, _) => ClipCheck.Run(this, "소리 설정");
     }
 
@@ -102,8 +106,8 @@ public partial class AudioSettingsWindow : Window
     {
         b.Content = on ? "ON" : "OFF";
         b.Foreground = on ? _teal : _muted;
-        b.FontFamily = (FontFamily)FindResource("PixelFont");
-        b.FontSize = 10;
+        b.SetResourceReference(FontFamilyProperty, "PixelFont");
+        b.SetResourceReference(FontSizeProperty, "PxS");
         b.MinWidth = 46;
     }
 
@@ -265,6 +269,15 @@ public partial class AudioSettingsWindow : Window
         if (BroadcastBtn.Tag is not string id) return;
         _panel.UseMic(id);
         UpdateBroadcast();
+    }
+
+    /// <summary>테마가 바뀌면 코드에서 칠한 색을 다시 칠한다.</summary>
+    void OnThemeChanged()
+    {
+        UpdateTexts();
+        UpdatePresetTip();
+        UpdateBroadcast();
+        ToolText.Foreground = Tools.Ffmpeg != null ? _muted : _danger;
     }
 
     void OnCloseClick(object sender, RoutedEventArgs e) => Close();

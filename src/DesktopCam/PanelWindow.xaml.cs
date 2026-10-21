@@ -18,8 +18,11 @@ public record Alert(string Tag, string Message, Brush Color);
 public partial class PanelWindow : Window
 {
     const int PanelGap = 24;          // 녹화 영역 오른쪽 끝과 패널 사이 (실제 픽셀)
-    const int PanelHeightPx = 1080;   // 패널 높이는 HD 세로 크기로 고정
-    const int PanelWidthPx = 440;
+    // 패널 내용은 이 디자인 크기(DIP)로 배치하고 LayoutTransform 으로 같은 비율로 키우거나 줄인다.
+    // 확대율 100% = 실제 픽셀 440×1080 (Windows 배율과 상관없이 같은 모습).
+    const double DesignW = 440, DesignH = 1080;
+    const double MinDesignH = 1000;   // 작업 영역이 낮으면 내용 높이를 여기까지는 줄여 쓰고(창 목록이 줄어듦), 그래도 넘치면 스크롤
+    const int ZoomMin = 70, ZoomMax = 150, ZoomStep = 10;
     const int HotkeyFit = 1, HotkeyMin = 2, HotkeyRec = 3, HotkeyPause = 4;
     const long MinFreeBytes = 2L * 1024 * 1024 * 1024;   // 이보다 여유 공간이 적으면 녹화를 시작하지 않음
 
@@ -36,9 +39,9 @@ public partial class PanelWindow : Window
     const float SilencePeak = 0.002f;   // 약 -54dB 아래는 소리 없음으로 본다
     const float ClipPeak = 0.99f;
 
-    // 자주 쓰는 색은 한 번만 찾아 둔다 (50ms 마다 FindResource 하지 않게)
+    // 자주 쓰는 색은 한 번만 찾아 둔다 (50ms 마다 FindResource 하지 않게). 테마가 바뀌면 OnThemeChanged 에서 다시
     Brush _teal = Brushes.Transparent, _yellow = Brushes.Transparent, _danger = Brushes.Transparent,
-          _bgPanel = Brushes.Transparent, _onAccent = Brushes.Transparent, _cream = Brushes.Transparent;
+          _bgPanel = Brushes.Transparent, _onAccent = Brushes.Transparent;
     long _freeCache = -1;
     DateTime _freeCheckedAt, _muteCheckedAt;
     bool _micMutedCache;
@@ -70,7 +73,6 @@ public partial class PanelWindow : Window
         _danger = (Brush)FindResource("Danger");
         _bgPanel = (Brush)FindResource("BgPanel");
         _onAccent = (Brush)FindResource("OnAccent");
-        _cream = (Brush)FindResource("Cream");
         WinList.ItemsSource = _items;
 
         (_settings.Preset switch { "720" => Res720Btn, "HD" => HdBtn, _ => QhdBtn }).IsChecked = true;
@@ -93,6 +95,8 @@ public partial class PanelWindow : Window
         Closing += OnClosingWindow;
         FolderText.Text = _settings.OutputFolder;
         FolderText.ToolTip = _settings.OutputFolder;
+        (Theme.Current == Theme.Simple ? ThemeSimple : ThemeSignature).IsChecked = true;
+        Theme.Changed += OnThemeChanged;
         _ready = true;
         InitScriptAndMonitor();
         UpdateFxLabel();
@@ -121,7 +125,9 @@ public partial class PanelWindow : Window
         StartupTrace.Mark("hotkeys");
         ApplyRegion();
         StartupTrace.Mark("ApplyRegion");
+        _fitter.StripCaption = _settings.NoCaption;
         UpdateHideMinButton();
+        UpdateNoCaptionButton();
         RefreshList();
         StartupTrace.Mark("RefreshList");
         _refreshTimer.Start();
@@ -162,9 +168,11 @@ public partial class PanelWindow : Window
         UnregisterHotKey(_hwnd, HotkeyScript);
         UnregisterHotKey(_hwnd, HotkeyNext);
         UnregisterHotKey(_hwnd, HotkeyPrev);
+        _fitter.RestoreAllFitted(_region);   // 맞춰 둔 창은 원래 자리로 (제목 표시줄이 화면 밖에 남지 않게)
         DisposeScriptAndMonitor();
         _recorder.Dispose();
         SystemEvents.DisplaySettingsChanged -= OnDisplayChanged;
+        Theme.Changed -= OnThemeChanged;
         _meterTimer.Stop();
         _audio.Dispose();
         _settings.Save();
@@ -222,17 +230,35 @@ public partial class PanelWindow : Window
         _taskbarInside = work.Left > _region.Left || work.Top > _region.Top
                       || work.Right < _region.Right || work.Bottom < _region.Bottom;
 
-        // 패널: 녹화 영역 오른쪽에서 PanelGap 만큼 떨어진 곳. 자리가 없으면 왼쪽, 그래도 없으면 화면 오른쪽 끝.
+        // 패널 크기: 디자인 크기 × k (DIP). 실제 픽셀 = 디자인 × k × s.
         double s = PresentationSource.FromVisual(this)?.CompositionTarget.TransformToDevice.M11 ?? 1;
         const int ShadowPx = 8;   // 오버레이가 패널 뒤에 그리는 그림자
-        double widthPx = PanelWidthPx;
+        int zoom = Math.Clamp(_settings.PanelZoom, ZoomMin, ZoomMax);
+        double k = zoom / 100.0 / s;
+
+        // 패널 위쪽은 확대율과 상관없이 고정: 영역 위쪽에 맞추되, 100% 패널이 작업 영역 안에 들어오는 곳까지만 내린다.
+        // 키우면 아래·오른쪽으로 커지고, 화면 바닥을 넘으면 창은 바닥까지만 쓰고 세로 스크롤한다.
+        double refPx = Math.Min(DesignH, work.Height - ShadowPx);
+        double topPx = Math.Clamp(_region.Top, work.Top, Math.Max(work.Top, work.Bottom - ShadowPx - refPx));
+        double availPx = Math.Max(100, work.Bottom - ShadowPx - topPx);
+
+        // 화면이 낮으면 먼저 내용 높이를 MinDesignH 까지 줄여(창 목록이 짧아짐) 스크롤 없이 맞춰 본다
+        double designH = DesignH * k * s > availPx ? Math.Max(MinDesignH, availPx / (k * s)) : DesignH;
+        double contentWPx = Math.Round(DesignW * k * s), contentHPx = Math.Round(designH * k * s);
+        bool scroll = contentHPx > Math.Floor(availPx);
+        double heightPx = scroll ? Math.Floor(availPx) : contentHPx;
+        double barPx = scroll ? Math.Round(20 * s) : 0;   // 스크롤바(약 20)는 내용 옆에 붙인다 (내용 폭이 잘리지 않게)
+        double widthPx = contentWPx + barPx;
+        // 내용 크기는 반올림한 창 크기에 꼭 맞게 (반 픽셀 틈·잘림 없게)
+        ApplyPanelScale(k, contentWPx / (k * s), contentHPx / (k * s));
+        if (scroll) Resources["PanelBarW"] = barPx / s;
+        PanelScroll.VerticalScrollBarVisibility = scroll ? ScrollBarVisibility.Visible : ScrollBarVisibility.Disabled;
+
+        // 패널: 녹화 영역 오른쪽에서 PanelGap 만큼 떨어진 곳. 자리가 없으면 왼쪽, 그래도 없으면 화면 오른쪽 끝.
         double needPx = widthPx + ShadowPx;
         double leftPx = _region.Right + PanelGap + needPx <= mon.Right ? _region.Right + PanelGap
                       : _region.Left - PanelGap - needPx >= mon.Left ? _region.Left - PanelGap - needPx
                       : mon.Right - needPx;
-        // 높이는 HD 세로 1080 고정. 영역 위쪽에 맞추되 작업표시줄 위로 넘치지 않게 (그림자 자리 포함).
-        double heightPx = Math.Min(PanelHeightPx, work.Height - ShadowPx);
-        double topPx = Math.Clamp(_region.Top, work.Top, work.Bottom - heightPx - ShadowPx);
         Left = leftPx / s;
         Top = topPx / s;
         Width = widthPx / s;
@@ -242,6 +268,80 @@ public partial class PanelWindow : Window
         _workArea = work;
         PlaceScript();
         PlaceHelpButton();
+    }
+
+    // ── 패널 확대·축소 ──
+    // 100% = 실제 440×1080 px (Windows 배율과 상관없이). 70~150% 를 언제나 그대로 쓰고, 화면보다 길면 스크롤한다.
+
+    double _appliedK = -1;
+
+    void ApplyPanelScale(double k, double contentW, double contentH)
+    {
+        Root.Width = contentW;
+        Root.Height = contentH;
+        if (Math.Abs(k - _appliedK) > 1e-6)
+        {
+            _appliedK = k;
+            Root.LayoutTransform = Math.Abs(k - 1) < 1e-6 ? Transform.Identity : new ScaleTransform(k, k);
+            // Display 글자는 확대·축소하면 흐려지므로, 배율을 쓸 때는 Ideal 로 그린다
+            TextOptions.SetTextFormattingMode(Root, Math.Abs(k - 1) < 1e-6 ? TextFormattingMode.Display : TextFormattingMode.Ideal);
+        }
+        int zoom = Math.Clamp(_settings.PanelZoom, ZoomMin, ZoomMax);
+        ZoomText.Text = $"{zoom}%";
+        ZoomOutBtn.IsEnabled = zoom > ZoomMin;
+        ZoomInBtn.IsEnabled = zoom < ZoomMax;
+    }
+
+    void OnZoomOut(object sender, RoutedEventArgs e) => SetZoom(_settings.PanelZoom - ZoomStep);
+    void OnZoomIn(object sender, RoutedEventArgs e) => SetZoom(_settings.PanelZoom + ZoomStep);
+
+    void SetZoom(int zoom)
+    {
+        zoom = Math.Clamp((int)Math.Round(zoom / (double)ZoomStep) * ZoomStep, ZoomMin, ZoomMax);
+        if (zoom == _settings.PanelZoom) return;
+        _settings.PanelZoom = zoom;
+        ApplyRegion();
+        _settings.Save();
+    }
+
+    // 테마 · 확대·축소 묶음의 버튼 사이(글자 · 테두리)를 눌러도 머리 칸 끌기가 시작되지 않게
+    void OnHeaderToolDown(object sender, MouseButtonEventArgs e) => e.Handled = true;
+
+    // ── 테마: 시그니처 / 심플 ──
+
+    void OnThemeChecked(object sender, RoutedEventArgs e)
+    {
+        if (!_ready) return;
+        string name = sender == ThemeSimple ? Theme.Simple : Theme.Signature;
+        if (name == Theme.Current) return;
+        _settings.Theme = name;
+        Theme.Apply(name);   // XAML 은 DynamicResource 라 바로 바뀌고, 코드에서 칠한 색은 OnThemeChanged 에서
+        _settings.Save();
+    }
+
+    /// <summary>테마가 바뀌면 코드에서 기억해 둔 브러시를 새로 가져와 다시 칠한다.</summary>
+    void OnThemeChanged()
+    {
+        _teal = (Brush)FindResource("Teal");
+        _yellow = (Brush)FindResource("Yellow");
+        _danger = (Brush)FindResource("Danger");
+        _bgPanel = (Brush)FindResource("BgPanel");
+        _onAccent = (Brush)FindResource("OnAccent");
+
+        LevelMeter.ResetBrushes();
+        SysMeter.InvalidateVisual();
+        MicMeter.InvalidateVisual();
+        UpdateAudioToggles();
+        UpdateMonitorUi();
+        UpdateFxLabel();
+        UpdateNoCaptionButton();
+        ScriptShowBtn.Foreground = _settings.ScriptVisible ? _teal : _danger;
+        UpdateVoiceUi();
+        UpdateHeaderState();   // 칩 · 머리 칸 바탕은 브러시가 바뀌었으므로 다시 칠해진다
+        _alertKey = "\0";      // 알림 · 상태 글자는 다음 MeterTick 에서 새 색으로
+        if (StatusTag.Text is { Length: > 0 } t)
+            StatusTag.Foreground = t.Contains("FAIL") ? _danger : t.Contains("WAIT") ? _yellow : _teal;
+        (Theme.Current == Theme.Simple ? ThemeSimple : ThemeSignature).IsChecked = true;
     }
 
     // ── 패널 머리를 끌어서 녹화 영역 옮기기 ──
@@ -410,7 +510,38 @@ public partial class PanelWindow : Window
     }
 
     void UpdateHideMinButton() =>
-        HideMinBtn.Content = _settings.HideMinimized ? "비활성 창 보이기" : "비활성 창 숨기기";
+        HideMinBtn.Content = _settings.HideMinimized ? "비활성 보이기" : "비활성 숨기기";
+
+    /// <summary>제목 표시줄 빼기 켜기 / 끄기. 이미 맞춰 둔 창은 새 기준으로 다시 맞춘다.</summary>
+    void OnNoCaptionClick(object sender, RoutedEventArgs e)
+    {
+        // 지금 기준(올린 높이 포함)으로 맞춘 창을 먼저 모은 뒤 설정을 바꾼다
+        var fitted = _items.Where(i => _fitter.IsFitted(i.Handle, _region)).Select(i => i.Handle).ToList();
+        _settings.NoCaption = !_settings.NoCaption;
+        _fitter.StripCaption = _settings.NoCaption;
+        _settings.Save();
+        UpdateNoCaptionButton();
+
+        int notFound = 0, blocked = 0;
+        foreach (var h in fitted)
+        {
+            var res = _fitter.Fit(h, _region);   // 켜면 제목 표시줄을 영역 위로 올리고, 끄면 영역 안으로 다시 맞춤
+            if (res.Caption == WindowFitter.CaptionResult.NotFound) notFound++;
+            else if (res.Caption == WindowFitter.CaptionResult.Blocked) blocked++;
+        }
+
+        if (blocked > 0) SetStatus("WAIT", $"창 {blocked}개는 위로 올라가지 않아 제목 표시줄이 영역에 남습니다. 영역을 조금 아래로 옮겨 보세요.");
+        else if (notFound > 0) SetStatus("WAIT", $"창 {notFound}개는 제목 표시줄을 찾지 못해 그냥 맞췄습니다.");
+        else SetStatus("OK", _settings.NoCaption ? "맞춘 창의 제목 표시줄을 녹화 영역 위로 올립니다." : "맞춘 창의 제목 표시줄을 영역 안으로 다시 넣었습니다.");
+        RefreshList();
+    }
+
+    void UpdateNoCaptionButton()
+    {
+        NoCaptionBtn.Foreground = _settings.NoCaption ? _teal : (Brush)FindResource("Muted");
+        NoCaptionBtn.ToolTip = (_settings.NoCaption ? "[ ON ] " : "[ OFF ] ")
+            + "맞춘 창의 제목 표시줄을 녹화 영역 위로 밀어 올려 안 찍히게 합니다. 내용은 영역에 꽉 찹니다. 되돌리기 하거나 끄면 원래대로.";
+    }
 
     /// <summary>위로: 창을 맨 앞으로. 최소화돼 있으면 먼저 연다.</summary>
     void OnTopClick(object sender, RoutedEventArgs e)
@@ -460,11 +591,15 @@ public partial class PanelWindow : Window
 
     void Fit(IntPtr h, string title)
     {
-        var (ok, actual) = _fitter.Fit(h, _region);
-        if (!ok)
+        var res = _fitter.Fit(h, _region);
+        if (!res.Ok)
             SetStatus("FAIL", $"\"{title}\" 창을 옮기지 못했습니다. 관리자 권한으로 실행된 창일 수 있습니다.");
-        else if (!WindowFitter.Matches(actual, _region))
-            SetStatus("WAIT", $"\"{title}\" 창은 크기 제한이 있어 {actual.Width}×{actual.Height}까지만 맞춰졌습니다.");
+        else if (res.Caption == WindowFitter.CaptionResult.Blocked)
+            SetStatus("WAIT", $"\"{title}\" 창이 위로 올라가지 않아 제목 표시줄이 영역에 남습니다. 영역을 조금 아래로 옮겨 보세요.");
+        else if (!WindowFitter.Matches(res.Actual, res.Target))
+            SetStatus("WAIT", $"\"{title}\" 창은 크기 제한이 있어 {res.Actual.Width}×{res.Actual.Height - res.Lift}까지만 맞춰졌습니다.");
+        else if (res.Caption == WindowFitter.CaptionResult.NotFound)
+            SetStatus("WAIT", $"\"{title}\" 창은 제목 표시줄을 찾지 못해 그냥 맞췄습니다.");
         else
             SetStatus("OK", $"\"{title}\" 창을 {_region.Width}×{_region.Height}로 맞췄습니다.");
     }
@@ -658,12 +793,7 @@ public partial class PanelWindow : Window
         if (StateText.Foreground != chipFg) StateText.Foreground = chipFg;
 
         var headerBg = lit ? _danger : _bgPanel;
-        if (Header.Background != headerBg)
-        {
-            Header.Background = headerBg;
-            Wordmark.Foreground = lit ? _onAccent : _cream;
-            HeaderCursor.Foreground = lit ? _onAccent : _yellow;
-        }
+        if (Header.Background != headerBg) Header.Background = headerBg;
     }
 
     static void SetState(TextBlock t, (string tag, Brush color) s)

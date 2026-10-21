@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="소리 설정 · Desktop CAM" Icon="Assets/DesktopCam.ico"
         Width="560" SizeToContent="Height"
-        WindowStyle="None" ResizeMode="NoResize" Background="{StaticResource Bg}"
+        WindowStyle="None" ResizeMode="NoResize" Background="{DynamicResource Bg}"
         ShowInTaskbar="True" Topmost="True" WindowStartupLocation="CenterScreen"
-        FontFamily="{StaticResource KoFont}" FontSize="13" Foreground="{StaticResource Cream}"
+        FontFamily="{StaticResource KoFont}" FontSize="13" Foreground="{DynamicResource Cream}"
         UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
 
     <Window.Resources>
@@ -18,16 +18,16 @@
             <Setter Property="MinHeight" Value="28"/>
             <Setter Property="Padding" Value="10,0"/>
             <Setter Property="FontFamily" Value="{StaticResource KoFont}"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="{DynamicResource PxL}"/>
         </Style>
         <Style x:Key="Label" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style x:Key="Val" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{DynamicResource PixelFont}"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="{DynamicResource PxS}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
         </Style>
@@ -36,17 +36,17 @@
         </Style>
     </Window.Resources>
 
-    <Border BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Background="{StaticResource Scanlines}">
+    <Border BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Background="{DynamicResource Scanlines}">
         <StackPanel Margin="12">
             <!-- 머리 -->
-            <Border Background="{StaticResource BgPanel}" BorderBrush="{StaticResource TealDeep}" BorderThickness="2" Padding="8,5"
+            <Border Background="{DynamicResource BgPanel}" BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Padding="8,5"
                     Margin="0,0,0,10" MouseLeftButtonDown="OnHeaderDown" Cursor="SizeAll">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Foreground="{StaticResource Teal}" Text="&gt; "/>
-                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="11" Text="MIC FILTER"/>
+                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxM}" Foreground="{DynamicResource Teal}" Text="&gt; "/>
+                        <TextBlock FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxM}" Text="MIC FILTER"/>
                     </StackPanel>
-                    <Button Style="{StaticResource IconBtn}" Content="X" HorizontalAlignment="Right" MinHeight="24" MinWidth="24" FontSize="10"
+                    <Button Style="{StaticResource IconBtn}" Content="X" HorizontalAlignment="Right" MinHeight="24" MinWidth="24" FontSize="{DynamicResource PxS}"
                             Click="OnCloseClick" ToolTip="닫기"/>
                 </Grid>
             </Border>
@@ -54,7 +54,7 @@
             <!-- 프리셋 -->
             <ContentControl Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>PRESET</TextBlock>
+                    <TextBlock Style="{StaticResource Section}"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>PRESET</TextBlock>
                     <WrapPanel x:Name="PresetPanel"/>
                     <TextBlock x:Name="PresetTip" Style="{StaticResource Label}" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
@@ -80,16 +80,16 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.ColumnSpan="3" Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>FILTER · EQ</TextBlock>
+                    <TextBlock Grid.ColumnSpan="3" Style="{StaticResource Section}"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>FILTER · EQ</TextBlock>
 
                     <TextBlock Grid.Row="1" Style="{StaticResource Label}" Text="잡음 제거"/>
-                    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Left">
+                    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}" HorizontalAlignment="Left">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="Dn0" GroupName="dn" Style="{StaticResource SegSm}" Content="끔" Tag="0" Checked="OnDenoise"/>
-                            <Border Width="2" Background="{StaticResource Teal}"/>
+                            <Border Width="2" Background="{DynamicResource Edge}"/>
                             <RadioButton x:Name="Dn1" GroupName="dn" Style="{StaticResource SegSm}" Content="약하게" Tag="1" Checked="OnDenoise"
                                          ToolTip="고르게 깔린 잡음(팬·히스)을 줄입니다"/>
-                            <Border Width="2" Background="{StaticResource Teal}"/>
+                            <Border Width="2" Background="{DynamicResource Edge}"/>
                             <RadioButton x:Name="Dn2" GroupName="dn" Style="{StaticResource SegSm}" Content="강하게 (AI)" Tag="2" Checked="OnDenoise"
                                          ToolTip="AI(RNNoise)가 목소리만 남깁니다. 잡음이 심할 때"/>
                         </StackPanel>
@@ -126,12 +126,12 @@
                     <TextBlock x:Name="AirText" Grid.Row="7" Grid.Column="2" Style="{StaticResource Val}" Margin="0,8,0,0"/>
 
                     <TextBlock Grid.Row="8" Style="{StaticResource Label}" Text="크기 고르게" Margin="0,10,0,0"/>
-                    <Border Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2" BorderBrush="{StaticResource Teal}" BorderThickness="2" HorizontalAlignment="Left" Margin="0,10,0,0">
+                    <Border Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}" HorizontalAlignment="Left" Margin="0,10,0,0">
                         <StackPanel Orientation="Horizontal">
                             <RadioButton x:Name="Cp0" GroupName="cp" Style="{StaticResource SegSm}" Content="끔" Tag="0" Checked="OnCompress"/>
-                            <Border Width="2" Background="{StaticResource Teal}"/>
+                            <Border Width="2" Background="{DynamicResource Edge}"/>
                             <RadioButton x:Name="Cp1" GroupName="cp" Style="{StaticResource SegSm}" Content="약하게" Tag="1" Checked="OnCompress"/>
-                            <Border Width="2" Background="{StaticResource Teal}"/>
+                            <Border Width="2" Background="{DynamicResource Edge}"/>
                             <RadioButton x:Name="Cp2" GroupName="cp" Style="{StaticResource SegSm}" Content="강하게" Tag="2" Checked="OnCompress"/>
                         </StackPanel>
                     </Border>
@@ -145,7 +145,7 @@
             <!-- 미리 듣기 -->
             <ContentControl Style="{StaticResource Card}" Margin="0,10,4,4">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>PREVIEW</TextBlock>
+                    <TextBlock Style="{StaticResource Section}"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>PREVIEW</TextBlock>
                     <WrapPanel>
                         <Button x:Name="RecTestBtn" Style="{StaticResource BtnSm}" Content="5초 녹음" Click="OnRecordTest" Margin="0,0,4,4"
                                 ToolTip="지금 마이크로 5초 동안 말해 보세요"/>
@@ -161,7 +161,7 @@
             <!-- NVIDIA Broadcast · 기타 -->
             <ContentControl Style="{StaticResource Card}" Margin="0,10,4,4">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource Section}"><Run Foreground="{StaticResource Teal}" Text="&gt; "/>MORE</TextBlock>
+                    <TextBlock Style="{StaticResource Section}"><Run Foreground="{DynamicResource Teal}" Text="&gt; "/>MORE</TextBlock>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

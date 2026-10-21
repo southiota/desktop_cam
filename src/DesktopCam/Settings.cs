@@ -13,6 +13,8 @@ public class Settings
         Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "DesktopCAM");
     public int OffsetX { get; set; }              // 녹화 영역 왼쪽 위 위치 (모니터 기준 실제 픽셀)
     public int OffsetY { get; set; }
+    public int PanelZoom { get; set; } = 100;      // 패널 크기 70~150 (%). 100 = 실제 높이 1080 픽셀 (Windows 배율과 상관없이)
+    public string Theme { get; set; } = "Signature";   // 화면 테마: Signature(시그니처) · Simple(심플)
 
     // 소리: 장치 ID 가 null 이면 Windows 기본 장치를 따른다
     public string? SystemDeviceId { get; set; }
@@ -25,6 +27,7 @@ public class Settings
     // 마이크 모니터링: 녹화하지 않는 다른 출력 장치(헤드셋)로 내 목소리를 들려준다
     public bool MonitorEnabled { get; set; }
     public bool HideMinimized { get; set; }           // 창 목록에서 최소화된 창 숨기기
+    public bool NoCaption { get; set; }               // 맞춘 창의 제목 표시줄 빼기
     public string? MonitorDeviceId { get; set; }
     public string? MonitorDeviceName { get; set; }
 

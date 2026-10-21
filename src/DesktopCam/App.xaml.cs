@@ -22,9 +22,10 @@ public partial class App : Application
 
         StartupTrace.Mark("OnStartup");
         base.OnStartup(e);
-        LoadPixelFont();
 
         var settings = Settings.Load();
+        Theme.LoadPixelFont();
+        Theme.Apply(settings.Theme);   // 창을 만들기 전에 저장된 테마로
         var overlay = new OverlayWindow();
         overlay.Show();
         StartupTrace.Mark("overlay shown");
@@ -34,14 +35,6 @@ public partial class App : Application
         panel.Owner = overlay;   // 패널은 항상 오버레이 위에
         panel.Show();
         StartupTrace.Mark("panel.Show returned");
-    }
-
-    /// <summary>Fonts\PressStart2P-Regular.ttf 가 있으면 픽셀 서체로 쓴다. 없으면 Consolas.</summary>
-    void LoadPixelFont()
-    {
-        var dir = Path.Combine(AppContext.BaseDirectory, "Fonts");
-        if (File.Exists(Path.Combine(dir, "PressStart2P-Regular.ttf")))
-            Resources["PixelFont"] = new FontFamily(new Uri(dir + Path.DirectorySeparatorChar), "./#Press Start 2P, Consolas");
     }
 
     protected override void OnExit(ExitEventArgs e)

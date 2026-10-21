@@ -58,10 +58,15 @@ public partial class OverlayWindow : Window
         Edge.Width = hole.Width + e * 2;
         Edge.Height = hole.Height + e * 2;
         Edge.StrokeThickness = e;
-        Edge.Stroke = (Brush)FindResource(recording ? "Danger" : "Teal");
+        // 테마를 바꾸면 바로 따라가게 리소스 참조로 건다 (대기 = 테마 강조색, 녹화 중 = 빨강)
+        Edge.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, recording ? "Danger" : "Teal");
 
+        _hole = hole;
         PlaceCredit(hole, s);
     }
+
+    Rect _hole;
+    double _panelHeightPx = 1080;   // 패널 실제 높이. 확대·축소로 바뀌므로 SetPanelShadow 에서 받는다
 
     /// <summary>패널 위치(실제 픽셀, 화면 좌표)를 받아 그 뒤에 8px 밀린 그림자를 그린다.</summary>
     public void SetPanelShadow(double leftPx, double topPx, double widthPx, double heightPx)
@@ -73,17 +78,19 @@ public partial class OverlayWindow : Window
         PanelShadow.Width = widthPx / s;
         PanelShadow.Height = heightPx / s;
         PanelShadow.Visibility = Visibility.Visible;
+        _panelHeightPx = heightPx;
+        PlaceCredit(_hole, s);   // 패널 높이가 바뀌면 크레딧 자리도 다시
     }
 
     /// <summary>
     /// 크레딧은 녹화에 찍히지 않도록 항상 영역 바깥에 둔다.
     /// 1) 영역 아래, 왼쪽 맞춤  2) 영역 왼쪽, 아래 맞춤
-    /// 3) QHD 처럼 영역이 화면 높이를 다 쓰면 오른쪽 패널(높이 1080) 아래 빈 곳의 바닥
+    /// 3) QHD 처럼 영역이 화면 높이를 다 쓰면 오른쪽 패널 아래 빈 곳의 바닥
     /// 4) 그래도 자리가 없으면 숨김
     /// </summary>
     void PlaceCredit(Rect hole, double s)
     {
-        const int PanelGap = 24, PanelHeight = 1080;   // PanelWindow 와 같은 값
+        const int PanelGap = 24;   // PanelWindow 와 같은 값
         var work = GetPrimaryMonitor().work;
         double workBottom = (work.Bottom - _monitor.Top) / s;   // 작업표시줄에 가리지 않게
         double gap = (EdgeWidth + 10) / s;
@@ -102,7 +109,7 @@ public partial class OverlayWindow : Window
             x = hole.Left - gap - size.Width;
             y = Math.Min(hole.Bottom, workBottom) - size.Height;
         }
-        else if (hole.Top + (PanelHeight + 8) / s + gap + size.Height <= workBottom
+        else if (hole.Top + (_panelHeightPx + 8) / s + gap + size.Height <= workBottom
                  && hole.Right + PanelGap / s + size.Width <= _monitor.Width / s)
         {
             x = hole.Right + PanelGap / s;
