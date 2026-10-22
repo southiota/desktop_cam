@@ -187,9 +187,9 @@ tools/make_icon.py   로고·아이콘 생성 (픽셀 격자 16×16)
 brand/               로고 원본: desktopcam-icon.svg(바탕 포함) · desktopcam-mark.svg(바탕 없음) · .ico · 512px PNG
 ```
 
-빌드 (실행 파일 하나): `dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o dist/DesktopCAM`
+빌드 (실행 파일 하나): `dotnet publish src/DesktopCam -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o out/DesktopCAM`
 
-마이크 다듬기를 쓰려면 `dist/DesktopCAM/tools/` 에 [ffmpeg LGPL 빌드](https://github.com/BtbN/FFmpeg-Builds/releases)의 `ffmpeg.exe` 와 [cb.rnnn](https://github.com/GregorR/rnnoise-models) 을 넣습니다.
+마이크 다듬기를 쓰려면 `out/DesktopCAM/tools/` 에 [ffmpeg LGPL 빌드](https://github.com/BtbN/FFmpeg-Builds/releases)의 `ffmpeg.exe` 와 [cb.rnnn](https://github.com/GregorR/rnnoise-models) 을 넣습니다.
 
 배포: `v0.5.0` 처럼 `v` 로 시작하는 태그를 올리면 GitHub Actions(`.github/workflows/release.yml`)가 빌드하고 ffmpeg · 잡음 제거 모델을 넣어 Releases 에 zip 을 올립니다.
 

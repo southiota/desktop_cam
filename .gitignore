@@ -14,5 +14,11 @@ tools/ffmpeg*
 
 # 개인 · 로컬
 .claude/
-demo/
-ReLegacy-Design-System/
+
+# 팀 작업 자리 (폴더 이름 규칙: 작업 재료 · 끝난 것 · 쌓이는 기록)
+work/
+archive/
+logs/
+
+# 주간 보고 지표 기록 (로컬, 11/3 뒤 logs/ 로 옮김)
+.metrics/
