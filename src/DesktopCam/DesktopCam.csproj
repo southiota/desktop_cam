@@ -30,6 +30,7 @@
   <ItemGroup>
     <Resource Include="Assets\logo.png" />
     <Resource Include="Assets\DesktopCam.ico" />
+    <Resource Include="Assets\emoji_coffee.png;Assets\emoji_rofl.png" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />

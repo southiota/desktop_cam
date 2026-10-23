@@ -138,6 +138,7 @@ public partial class PanelWindow : Window
         ApplyScriptVisibility();
         StartupTrace.Mark("ApplyScriptVisibility");
         CreateHelpButton();
+        CreateDonate();
         RepairInterruptedRecording();
         ClipCheck.Run(this, "패널");
         if (Environment.GetEnvironmentVariable("DESKTOPCAM_OPEN_EDITOR") == "1") OnScriptEditor(this, new RoutedEventArgs());   // 확인용

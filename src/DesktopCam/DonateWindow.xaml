@@ -1,0 +1,52 @@
+<Window x:Class="DesktopCam.DonateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Desktop CAM Donate"
+        WindowStyle="None" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False" Topmost="True" ShowActivated="False" Background="{DynamicResource Bg}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+    <!-- 녹화 영역 가운데의 후원 계좌 안내. X 로 닫는다. 녹화에는 찍히지 않는다 -->
+    <Border Background="{DynamicResource BgPanel}" BorderBrush="{DynamicResource Teal}" BorderThickness="{DynamicResource EdgeW}" Padding="22,14,14,20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="후원" FontFamily="{StaticResource KoFont}" FontSize="13" FontWeight="Bold"
+                       Foreground="{DynamicResource Teal}" VerticalAlignment="Center" Margin="0,6,0,0"/>
+            <Button Grid.Column="1" Click="OnClose" Cursor="Hand" ToolTip="닫기">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="Transparent" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}" Width="26" Height="26">
+                            <TextBlock x:Name="t" Text="✕" FontSize="13" Foreground="{DynamicResource Cream}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Hover}"/>
+                                <Setter TargetName="t" Property="Foreground" Value="{DynamicResource Hover}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="펙스트 · 국민은행" FontFamily="{StaticResource KoFont}" FontSize="15"
+                       Foreground="{DynamicResource Cream}" Margin="0,10,8,0"/>
+            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="620201-04-037201" FontFamily="Consolas" FontSize="26" FontWeight="Bold"
+                       Foreground="{DynamicResource Yellow}" Margin="0,4,8,0"/>
+            <TextBlock Grid.Row="3" Grid.ColumnSpan="2" FontFamily="{StaticResource KoFont}" FontSize="15"
+                       Foreground="{DynamicResource Cream}" Margin="0,12,8,0">
+                <!-- 컬러 이모지는 WPF 글꼴로 안 나와서 그림으로 (글자의 1.5배) -->
+                <InlineUIContainer BaselineAlignment="Center"><Image Source="Assets/emoji_coffee.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/></InlineUIContainer><Run Text=" 한잔만 주시면... 클로드 토큰 비용으로 쓸게요. "/><InlineUIContainer BaselineAlignment="Center"><Image Source="Assets/emoji_rofl.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/></InlineUIContainer>
+            </TextBlock>
+        </Grid>
+    </Border>
+</Window>

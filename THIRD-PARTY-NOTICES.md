@@ -12,6 +12,7 @@ Desktop CAM 은 아래 라이브러리 · 도구 · 데이터를 함께 쓰거�
 | FFmpeg, LGPL 빌드 (`tools/ffmpeg.exe`) | 마이크 다듬기 · 합치기 | LGPL (`tools/LICENSE.txt`) | https://ffmpeg.org · 빌드: https://github.com/BtbN/FFmpeg-Builds |
 | RNNoise 모델 cb.rnnn (`tools/cb.rnnn`) | AI 잡음 제거 | 저작권 대상 아님 (출처 README) | https://github.com/GregorR/rnnoise-models |
 | Press Start 2P | 픽셀 서체 | SIL OFL 1.1 (`licenses/OFL-PressStart2P.txt`) | https://fonts.google.com/specimen/Press+Start+2P |
+| Twemoji 그림 (☕ · 🤣, `Assets/emoji_*.png`) | 후원 안내의 컬러 이모지 | CC-BY 4.0 · Copyright Twitter, Inc and other contributors | https://github.com/jdecked/twemoji |
 | MinGW 런타임 (libgcc_s_seh-1, libstdc++-6, libwinpthread-1) | Vosk 가 씀 | GPL v3 + GCC 런타임 예외 · MIT/BSD | https://www.mingw-w64.org |
 
 FFmpeg 은 따로 실행하는 프로그램(`tools/ffmpeg.exe`)으로만 부르며 Desktop CAM 에 링크하지 않습니다. 다른 FFmpeg 빌드로 바꿔 넣어도 됩니다.

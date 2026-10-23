@@ -22,6 +22,17 @@ public partial class PanelWindow
     void PlaceHelpButton()
     {
         if (_help is { IsVisible: true }) _help.Place(_region, _panelPx, _workArea);
+        if (_donate is { IsVisible: true }) _donate.Place(_region);
+    }
+
+    DonateWindow? _donate;
+
+    void CreateDonate()
+    {
+        _donate = new DonateWindow { Owner = _overlay };
+        _donate.Closed += (_, _) => _donate = null;
+        _donate.Show();
+        _donate.Place(_region);
     }
 
     /// <summary>
