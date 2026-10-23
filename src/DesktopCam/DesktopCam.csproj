@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>DesktopCam</AssemblyName>
-    <Version>0.5.2</Version>
+    <Version>0.5.3</Version>
     <!-- ScreenRecorderLib 은 네이티브 코드를 포함하므로 x64 로 고정 -->
     <Platforms>x64</Platforms>
     <Platform>x64</Platform>
