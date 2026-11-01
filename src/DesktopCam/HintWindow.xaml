@@ -1,0 +1,17 @@
+<Window x:Class="DesktopCam.HintWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Desktop CAM Hint"
+        WindowStyle="None" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False" Topmost="True" ShowActivated="False" Background="{DynamicResource BgPanel}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+    <!-- 펜 · 형광펜 · 색을 바꿀 때 커서 옆에 잠깐 뜨는 안내. 녹화에 찍히지 않고 클릭은 통과한다 -->
+    <Border BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Padding="10,6">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock x:Name="MainText" FontFamily="{StaticResource KoFont}" FontSize="13" FontWeight="Bold"
+                       Foreground="{DynamicResource Cream}" VerticalAlignment="Center"/>
+            <TextBlock x:Name="KeysText" FontFamily="{StaticResource KoFont}" FontSize="12" Margin="14,0,0,0"
+                       Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</Window>

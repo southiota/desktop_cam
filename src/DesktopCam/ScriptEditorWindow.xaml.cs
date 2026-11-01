@@ -34,7 +34,6 @@ public partial class ScriptEditorWindow : Window
         LoadBrushes();
 
         (_s.ScriptPos switch { "Bottom" => PosBottom, "Left" => PosLeft, "Right" => PosRight, _ => PosTop }).IsChecked = true;
-        (_s.ScriptNextCount switch { 0 => Next0, 1 => Next1, _ => Next2 }).IsChecked = true;
         (_s.ScriptSensitivity switch { "Fast" => SensFast, "Strict" => SensStrict, _ => SensNormal }).IsChecked = true;
         UpdateDisplayButtons();
         UpdateVoiceButton();
@@ -363,21 +362,51 @@ public partial class ScriptEditorWindow : Window
         _panel.ApplyScriptDisplay();
     }
 
-    void OnNextCount(object sender, RoutedEventArgs e)
+    // ── 이전 줄 · 다음 줄 수: [숫자] [▲][▼] ──
+
+    void OnCountStep(object sender, RoutedEventArgs e)
     {
-        if (!_ready || sender is not RadioButton { Tag: string n }) return;
-        _s.ScriptNextCount = int.Parse(n);
+        if (sender is not FrameworkElement { Tag: string tag }) return;
+        var parts = tag.Split(':');
+        StepCount(parts[0], int.Parse(parts[1]));
+    }
+
+    void OnCountWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string which }) return;
+        StepCount(which, e.Delta > 0 ? 1 : -1);
+        e.Handled = true;
+    }
+
+    void OnCountClick(object sender, MouseButtonEventArgs e) => (sender as UIElement)?.Focus();   // 눌러 두면 화살표 키로 바꿀 수 있다
+
+    void OnCountKey(object sender, KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string which }) return;
+        int d = e.Key switch { Key.Up => 1, Key.Down => -1, _ => 0 };
+        if (d == 0) return;
+        StepCount(which, d);
+        e.Handled = true;
+    }
+
+    void StepCount(string which, int delta)
+    {
+        if (which == "prev") _s.ScriptPrevCount = Math.Clamp(_s.ScriptPrevCount + delta, 0, ScriptWindow.MaxContext);
+        else _s.ScriptNextCount = Math.Clamp(_s.ScriptNextCount + delta, 0, ScriptWindow.MaxContext);
+        UpdateDisplayButtons();
         _panel.ApplyScriptDisplay();
     }
 
-    void OnTogglePrev(object sender, RoutedEventArgs e) { _s.ScriptShowPrev = !_s.ScriptShowPrev; UpdateDisplayButtons(); _panel.ApplyScriptDisplay(); }
     void OnToggleSection(object sender, RoutedEventArgs e) { _s.ScriptShowSection = !_s.ScriptShowSection; UpdateDisplayButtons(); _panel.ApplyScriptDisplay(); }
     void OnToggleCue(object sender, RoutedEventArgs e) { _s.ScriptShowCue = !_s.ScriptShowCue; UpdateDisplayButtons(); _panel.ApplyScriptDisplay(); }
 
     void UpdateDisplayButtons()
     {
         ScaleText.Text = $"{_s.ScriptScale * 100:0}%";
-        Toggle(ShowPrevBtn, "이전 줄", _s.ScriptShowPrev);
+        PrevCountText.Text = _s.ScriptPrevCount.ToString();
+        NextCountText.Text = _s.ScriptNextCount.ToString();
+        PrevCountText.Foreground = _s.ScriptPrevCount > 0 ? _teal : _muted;
+        NextCountText.Foreground = _s.ScriptNextCount > 0 ? _teal : _muted;
         Toggle(ShowSectionBtn, "섹션", _s.ScriptShowSection);
         Toggle(ShowCueBtn, "메모", _s.ScriptShowCue);
     }

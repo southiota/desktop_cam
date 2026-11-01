@@ -252,7 +252,7 @@ public partial class PanelWindow
     /// <summary>위치 · 크기 · 보일 것 설정을 대본 창에 적용한다.</summary>
     internal void ApplyScriptDisplay()
     {
-        _scriptWin?.SetOptions(_settings.ScriptShowPrev, _settings.ScriptShowSection, _settings.ScriptShowCue, _settings.ScriptNextCount);
+        _scriptWin?.SetOptions(_settings.ScriptPrevCount, _settings.ScriptShowSection, _settings.ScriptShowCue, _settings.ScriptNextCount);
         RefreshScript();
         PlaceScript();
         _settings.Save();
@@ -291,8 +291,8 @@ public partial class PanelWindow
         {
             if (_scriptWin == null)
             {
-                _scriptWin = new ScriptWindow { Owner = _overlay };
-                _scriptWin.SetOptions(_settings.ScriptShowPrev, _settings.ScriptShowSection, _settings.ScriptShowCue, _settings.ScriptNextCount);
+                _scriptWin = new ScriptWindow { Owner = TopOwner };   // 그림 창보다 위
+                _scriptWin.SetOptions(_settings.ScriptPrevCount, _settings.ScriptShowSection, _settings.ScriptShowCue, _settings.ScriptNextCount);
             }
             _scriptWin.Show();
             PlaceScript();

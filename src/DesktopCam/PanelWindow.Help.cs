@@ -29,7 +29,7 @@ public partial class PanelWindow
 
     void CreateDonate()
     {
-        _donate = new DonateWindow { Owner = _overlay };
+        _donate = new DonateWindow { Owner = TopOwner };   // 영역 가운데라 그림 창보다 위에 (X 를 누를 수 있게)
         _donate.Closed += (_, _) => _donate = null;
         _donate.Show();
         _donate.Place(_region);
@@ -60,6 +60,7 @@ public partial class PanelWindow
 
     void StartTour()
     {
+        Expand();   // 미니 바만 보이는 중이면 패널을 다시 열고 안내
         if (_tour != null) { _tour.Activate(); return; }
         _tour = new TourWindow(TourItems(), () => Px(this), () => Math.Clamp(_settings.PanelZoom, ZoomMin, ZoomMax) / 100.0) { Owner = this };
         _tour.Closed += (_, _) => _tour = null;
@@ -76,7 +77,7 @@ public partial class PanelWindow
 
         new(() => PanelPx(Header),
             "머리 칸",
-            "네모 칸 속 십자 화살표(이동 아이콘)를 잡고 끌면 녹화 영역과 패널이 같이 움직입니다. 시그니처 / 심플테마 = 화면 테마. - + = 패널 크기(70~150%, 화면보다 길면 스크롤). 상태 READY · REC · PAUSE, X 는 끄기."),
+            "네모 칸 속 십자 화살표(이동 아이콘)를 잡고 끌면 녹화 영역과 패널이 같이 움직입니다. 시그니처 / 심플테마 = 화면 테마. - + = 패널 크기(70~150%, 화면보다 길면 스크롤). 녹화 중에는 머리 칸이 빨갛게 깜빡입니다. 패널 닫기 = 녹화 · 대본 · 펜 · 소리만 남긴 작은 바로(작은 바 왼쪽 위 [패널 열기]로 돌아옴), X 는 끄기."),
 
         new(() => PanelPx(RecCard),
             "녹화 · 저장 폴더",
@@ -90,7 +91,7 @@ public partial class PanelWindow
         new(() => PanelPx(ScriptCard),
             "대본",
             "보이기 ON → 영역 안에 대본 글자만. < > 줄 이동, 자동스크롤 [AI] = 말하는 대로 넘김. ⚙ 편집 · 위치 · 크기.",
-            "Ctrl+Alt+S · N · B"),
+            "Ctrl+Alt+S · N/0 · B/9"),
 
         new(() => PanelPx(FitCard),
             "창 맞추기",
@@ -103,7 +104,7 @@ public partial class PanelWindow
 
         new(() => PanelPx(ShortcutText),
             "단축키",
-            "Ctrl+Alt 와 같이 누릅니다. 다른 프로그램을 쓰는 중에도 됩니다."),
+            "Ctrl+Alt 와 같이 누릅니다. 다른 프로그램을 쓰는 중에도 됩니다. 펜 · 형광펜으로 그리는 중에는 숫자만 눌러도 되고, Esc = 커서, Ctrl+Z = 한 획 지우기. 그린 것은 녹화에 찍힙니다."),
 
         new(() => _help != null ? Px(_help.HelpBtn) : null,
             "사용법",

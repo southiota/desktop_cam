@@ -39,13 +39,18 @@ public class Settings
     public bool ScriptAtBottom { get; set; }           // (예전 설정) 위쪽 / 아래쪽 → ScriptPos 로 옮김
     public string? ScriptPos { get; set; }             // Top · Bottom · Left · Right (녹화 영역 안)
     public double ScriptScale { get; set; } = 1.0;     // 글자 크기 배율 0.6 ~ 2.0
-    public bool ScriptShowPrev { get; set; } = true;     // 이전 줄 보이기
+    public bool ScriptShowPrev { get; set; } = true;     // (예전 설정) 이전 줄 켜기·끄기 → ScriptPrevCount 로 옮김
+    public int ScriptPrevCount { get; set; } = -1;       // 이전 줄 몇 줄까지 (0~20). -1 = 아직 안 옮김
     public bool ScriptShowSection { get; set; } = true;  // ## 섹션 이름 보이기
     public bool ScriptShowCue { get; set; } = true;      // > 메모 보이기
-    public int ScriptNextCount { get; set; } = 2;        // 다음 줄 몇 줄까지 (0~2)
+    public int ScriptNextCount { get; set; } = 2;        // 다음 줄 몇 줄까지 (0~20)
     public string ScriptSensitivity { get; set; } = "Normal";   // 자동스크롤: Fast · Normal · Strict
 
-    public MicFx MicFx { get; set; } = new();          // 마이크 소리 다듬기 (녹화 후 ffmpeg)
+    // 펜 · 형광펜 · 미니 바
+    public string PenColor { get; set; } = "#FF0000";  // 펜 · 형광펜 색 (색 고르기 창에서 고름)
+    public bool PanelCollapsed { get; set; }           // 패널을 닫고 미니 바만 보이기 (패널 왼쪽 위 자리)
+
+    public MicFx MicFx { get; set; } = new();         // 마이크 소리 다듬기 (녹화 후 ffmpeg)
 
     public int Width => Preset switch { "720" => 1280, "HD" => 1920, _ => 2560 };
     public int Height => Preset switch { "720" => 720, "HD" => 1080, _ => 1440 };
@@ -55,13 +60,15 @@ public class Settings
 
     public static Settings Load()
     {
+        Settings s = new();
         try
         {
             if (File.Exists(FilePath))
-                return JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath)) ?? new Settings();
+                s = JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath)) ?? new Settings();
         }
         catch { /* 설정이 깨졌으면 기본값으로 시작 */ }
-        return new Settings();
+        if (s.ScriptPrevCount < 0) s.ScriptPrevCount = s.ScriptShowPrev ? 1 : 0;   // 예전 켜기·끄기 → 줄 수
+        return s;
     }
 
     public void Save()

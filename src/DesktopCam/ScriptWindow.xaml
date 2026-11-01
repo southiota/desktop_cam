@@ -10,10 +10,9 @@
     <!-- 바탕·테두리 없이 글자만. 녹화에 찍히지 않고(화면 캡처 제외), 클릭은 아래 창으로 통과한다 -->
     <StackPanel>
         <local:OutlinedText x:Name="SectionText"/>   <!-- ## 섹션 이름 -->
-        <local:OutlinedText x:Name="PrevLine"/>      <!-- 이전 줄 -->
+        <StackPanel x:Name="PrevPanel"/>             <!-- 이전 줄들 (먼 줄이 위) -->
         <local:OutlinedText x:Name="CueText"/>       <!-- > 연출 메모 -->
         <local:OutlinedText x:Name="CurLine"/>       <!-- 지금 읽을 줄 -->
-        <local:OutlinedText x:Name="NextLine1"/>
-        <local:OutlinedText x:Name="NextLine2"/>
+        <StackPanel x:Name="NextPanel"/>             <!-- 다음 줄들 -->
     </StackPanel>
 </Window>

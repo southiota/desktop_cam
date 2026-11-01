@@ -147,39 +147,46 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <Image Source="Assets/logo.png" Width="20" Height="20" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
-                    <!-- 이동 아이콘: 테마와 크기 버튼 사이 빈 곳 가운데, 네모 칸 안 4방향 화살표 십자.
-                         버튼이 아니라서 누르면 머리 칸의 OnHeaderDown 으로 올라가 영역이 끌린다 -->
-                    <Border x:Name="DragGrip" Grid.Column="1" Margin="134,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Width="24" Height="24" Background="{DynamicResource BgRaised}" BorderBrush="{DynamicResource Edge}"
-                            BorderThickness="{DynamicResource EdgeW}" Cursor="SizeAll" ToolTip="끌어서 녹화 영역 옮기기">
-                        <Path Width="14" Height="14" Stretch="Uniform" SnapsToDevicePixels="True"
-                              Data="F1 M8,0 L11.5,3.5 L9,3.5 L9,7 L12.5,7 L12.5,4.5 L16,8 L12.5,11.5 L12.5,9 L9,9 L9,12.5 L11.5,12.5 L8,16 L4.5,12.5 L7,12.5 L7,9 L3.5,9 L3.5,11.5 L0,8 L3.5,4.5 L3.5,7 L7,7 L7,3.5 L4.5,3.5 Z">
-                            <Path.Style>
-                                <Style TargetType="Path">
-                                    <Setter Property="Fill" Value="{DynamicResource Muted}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
-                                            <Setter Property="Fill" Value="{DynamicResource Cream}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Path.Style>
-                        </Path>
-                    </Border>
-                    <!-- 테마: 시그니처(픽셀) / 심플테마(차분). 누르면 바로 바뀐다. 이 안을 눌러도 영역이 끌려가지 않게 막는다 -->
-                    <Border x:Name="ThemeBox" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0"
-                            BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}"
-                            Background="Transparent" Cursor="Arrow" MouseLeftButtonDown="OnHeaderToolDown"
-                            ToolTip="화면 테마. 바로 바뀌고, 다음에 켤 때도 그대로입니다">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton x:Name="ThemeSignature" GroupName="theme" Style="{StaticResource SegSm}" MinHeight="22" Padding="7,0"
-                                         FontFamily="{StaticResource KoFont}" FontSize="11" Content="시그니처" Checked="OnThemeChecked"
-                                         ToolTip="시그니처: 픽셀 글꼴 · 주사선 배경 · teal 강조"/>
-                            <RadioButton x:Name="ThemeSimple" GroupName="theme" Style="{StaticResource SegSm}" MinHeight="22" Padding="7,0"
-                                         FontFamily="{StaticResource KoFont}" FontSize="11" Content="심플테마" Checked="OnThemeChecked"
-                                         ToolTip="심플테마: 일반 글꼴 · 단색 배경 · 얇은 테두리"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- 테마 · 패널 닫기 · 이동 아이콘을 왼쪽부터 나란히 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <!-- 테마: 시그니처(픽셀) / 심플테마(차분). 누르면 바로 바뀐다. 이 안을 눌러도 영역이 끌려가지 않게 막는다 -->
+                        <Border x:Name="ThemeBox" VerticalAlignment="Center"
+                                BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}"
+                                Background="Transparent" Cursor="Arrow" MouseLeftButtonDown="OnHeaderToolDown"
+                                ToolTip="화면 테마. 바로 바뀌고, 다음에 켤 때도 그대로입니다">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="ThemeSignature" GroupName="theme" Style="{StaticResource SegSm}" MinHeight="22" Padding="7,0"
+                                             FontFamily="{StaticResource KoFont}" FontSize="11" Content="시그니처" Checked="OnThemeChecked"
+                                             ToolTip="시그니처: 픽셀 글꼴 · 주사선 배경 · teal 강조"/>
+                                <RadioButton x:Name="ThemeSimple" GroupName="theme" Style="{StaticResource SegSm}" MinHeight="22" Padding="7,0"
+                                             FontFamily="{StaticResource KoFont}" FontSize="11" Content="심플테마" Checked="OnThemeChecked"
+                                             ToolTip="심플테마: 일반 글꼴 · 단색 배경 · 얇은 테두리"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- 패널 닫기: 녹화 · 대본 넘기기 · 펜 · 소리만 남긴 작은 바로 (작은 바의 [패널 열기]로 돌아옴) -->
+                        <Button x:Name="CollapseBtn" Style="{StaticResource IconBtn}" Content="패널 닫기" Margin="6,0,0,0" MinHeight="24" Height="24" MinWidth="0" Padding="7,0"
+                                FontFamily="{StaticResource KoFont}" FontSize="11" VerticalAlignment="Center" Click="OnCollapseClick"
+                                ToolTip="패널 닫기: 녹화 · 대본 넘기기 · 펜 · 소리만 남긴 작은 바로 바꿉니다"/>
+                        <!-- 이동 아이콘: 패널 닫기 버튼 오른쪽, 네모 칸 안 4방향 화살표 십자.
+                             버튼이 아니라서 누르면 머리 칸의 OnHeaderDown 으로 올라가 영역이 끌린다 -->
+                        <Border x:Name="DragGrip" Margin="6,0,0,0" VerticalAlignment="Center"
+                                Width="24" Height="24" Background="{DynamicResource BgRaised}" BorderBrush="{DynamicResource Edge}"
+                                BorderThickness="{DynamicResource EdgeW}" Cursor="SizeAll" ToolTip="끌어서 녹화 영역 옮기기">
+                            <Path Width="14" Height="14" Stretch="Uniform" SnapsToDevicePixels="True"
+                                  Data="F1 M8,0 L11.5,3.5 L9,3.5 L9,7 L12.5,7 L12.5,4.5 L16,8 L12.5,11.5 L12.5,9 L9,9 L9,12.5 L11.5,12.5 L8,16 L4.5,12.5 L7,12.5 L7,9 L3.5,9 L3.5,11.5 L0,8 L3.5,4.5 L3.5,7 L7,7 L7,3.5 L4.5,3.5 Z">
+                                <Path.Style>
+                                    <Style TargetType="Path">
+                                        <Setter Property="Fill" Value="{DynamicResource Muted}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                <Setter Property="Fill" Value="{DynamicResource Cream}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Path.Style>
+                            </Path>
+                        </Border>
+                    </StackPanel>
                     <!-- 패널 크기: - / + (70~150%). 이 안을 눌러도 영역이 끌려가지 않게 막는다 -->
                     <StackPanel x:Name="ZoomBox" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0"
                                 Background="Transparent" Cursor="Arrow" MouseLeftButtonDown="OnHeaderToolDown"
@@ -191,8 +198,8 @@
                         <Button x:Name="ZoomInBtn" Style="{StaticResource IconBtn}" Content="+" MinHeight="24" MinWidth="24"
                                 FontSize="{DynamicResource PxS}" ToolTip="패널 크게" Click="OnZoomIn"/>
                     </StackPanel>
-                    <!-- 상태 칩: READY teal · REC danger · PAUSE yellow -->
-                    <Border x:Name="StateChip" Grid.Column="3" Background="{DynamicResource Teal}" Padding="6,4" VerticalAlignment="Center">
+                    <!-- 상태 칩: 머리 칸 폭이 모자라 숨김 (녹화 중에는 머리 칸 바탕이 깜빡여 알려 줌). 코드는 그대로 칠한다 -->
+                    <Border x:Name="StateChip" Grid.Column="3" Visibility="Collapsed" Background="{DynamicResource Teal}" Padding="6,4" VerticalAlignment="Center">
                         <TextBlock x:Name="StateText" FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource TxHead}"
                                    Foreground="{DynamicResource OnAccent}" Text="READY"/>
                     </Border>
@@ -336,10 +343,10 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Button Style="{StaticResource BtnSm}" Content="&lt;" MinWidth="28" FontFamily="{DynamicResource PixelFont}"
-                                FontWeight="Normal" FontSize="{DynamicResource PxS}" Click="OnScriptPrev" ToolTip="이전 줄 (Ctrl+Alt+B)"/>
+                                FontWeight="Normal" FontSize="{DynamicResource PxS}" Click="OnScriptPrev" ToolTip="이전 줄 (Ctrl+Alt+9 · Ctrl+Alt+B, 펜 · 형광펜 중에는 9)"/>
                         <TextBlock x:Name="ScriptCounter" Grid.Column="1" Style="{StaticResource Tag}" FontSize="{DynamicResource TxNum}" Margin="8,0" Text="0 / 0"/>
                         <Button Grid.Column="2" Style="{StaticResource BtnSm}" Content="&gt;" MinWidth="28" FontFamily="{DynamicResource PixelFont}"
-                                FontWeight="Normal" FontSize="{DynamicResource PxS}" Click="OnScriptNext" ToolTip="다음 줄 (Ctrl+Alt+N)"/>
+                                FontWeight="Normal" FontSize="{DynamicResource PxS}" Click="OnScriptNext" ToolTip="다음 줄 (Ctrl+Alt+0 · Ctrl+Alt+N, 펜 · 형광펜 중에는 0)"/>
                         <Button x:Name="VoiceBtn" Grid.Column="4" Style="{StaticResource BtnSm}" MinWidth="92" Click="OnVoiceToggle"/>
                     </Grid>
                 </StackPanel>
@@ -457,7 +464,8 @@
             <!-- 단축키: 패널 안에서 이곳에만 -->
             <TextBlock x:Name="ShortcutText" Grid.Row="8" FontFamily="{StaticResource CodeFont}" FontSize="{DynamicResource TxKeys}" Foreground="{DynamicResource Muted}" Margin="0,8,0,0">
                 <Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + R 녹화 · P 멈춤 · F 맞추기 · M 최소화
-                <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + S 대본 · N 다음 줄 · B 이전 줄
+                <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + S 대본 · 9/B 이전 줄 · 0/N 다음 줄
+                <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + 1 커서 · 2 펜 · 3 형광펜 · 4 색 · 5 지우기
             </TextBlock>
         </Grid>
     </Border>

@@ -165,28 +165,47 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Style="{StaticResource Label}" Text="크기"/>
                                 <Button Grid.Column="1" Style="{StaticResource BtnSm}" Content="-" MinWidth="30" Click="OnSmaller"/>
                                 <TextBlock x:Name="ScaleText" Grid.Column="2" FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxS}" Margin="8,0"
                                            MinWidth="40" TextAlignment="Center" VerticalAlignment="Center"/>
                                 <Button Grid.Column="3" Style="{StaticResource BtnSm}" Content="+" MinWidth="30" Click="OnBigger"/>
-                                <TextBlock Grid.Column="4" Style="{StaticResource Label}" Text="다음 줄" HorizontalAlignment="Right" Margin="0,0,8,0"/>
-                                <Border Grid.Column="5" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <RadioButton x:Name="Next0" GroupName="snext" Style="{StaticResource SegSm}" Content="0" Tag="0" Checked="OnNextCount"/>
-                                        <Border Width="2" Background="{DynamicResource Edge}"/>
-                                        <RadioButton x:Name="Next1" GroupName="snext" Style="{StaticResource SegSm}" Content="1" Tag="1" Checked="OnNextCount"/>
-                                        <Border Width="2" Background="{DynamicResource Edge}"/>
-                                        <RadioButton x:Name="Next2" GroupName="snext" Style="{StaticResource SegSm}" Content="2" Tag="2" Checked="OnNextCount"/>
-                                    </StackPanel>
+                            </Grid>
+                            <!-- 이전 줄 · 다음 줄 수: [숫자] [▲][▼] (숫자 칸에서 마우스 휠·위아래 화살표 키도 된다) -->
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource Label}" Text="이전 줄" Margin="0,0,8,0"/>
+                                <Border x:Name="PrevCountBox" Grid.Column="1" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}"
+                                        MinWidth="32" Focusable="True" Background="Transparent" Tag="prev"
+                                        MouseWheel="OnCountWheel" KeyDown="OnCountKey" MouseLeftButtonDown="OnCountClick" ToolTip="이전 줄 몇 줄까지 (0~20) · 휠·화살표 키로도 바꿉니다">
+                                    <TextBlock x:Name="PrevCountText" FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxS}"
+                                               TextAlignment="Center" VerticalAlignment="Center" Margin="6,2"/>
                                 </Border>
+                                <Button Grid.Column="2" Style="{StaticResource BtnSm}" Content="▲" MinWidth="26" Margin="4,0,0,0" Tag="prev:1" Click="OnCountStep" ToolTip="한 줄 더"/>
+                                <Button Grid.Column="3" Style="{StaticResource BtnSm}" Content="▼" MinWidth="26" Margin="2,0,0,0" Tag="prev:-1" Click="OnCountStep" ToolTip="한 줄 덜"/>
+                                <TextBlock Grid.Column="5" Style="{StaticResource Label}" Text="다음 줄" Margin="0,0,8,0"/>
+                                <Border x:Name="NextCountBox" Grid.Column="6" BorderBrush="{DynamicResource Edge}" BorderThickness="{DynamicResource EdgeW}"
+                                        MinWidth="32" Focusable="True" Background="Transparent" Tag="next"
+                                        MouseWheel="OnCountWheel" KeyDown="OnCountKey" MouseLeftButtonDown="OnCountClick" ToolTip="다음 줄 몇 줄까지 (0~20) · 휠·화살표 키로도 바꿉니다">
+                                    <TextBlock x:Name="NextCountText" FontFamily="{DynamicResource PixelFont}" FontSize="{DynamicResource PxS}"
+                                               TextAlignment="Center" VerticalAlignment="Center" Margin="6,2"/>
+                                </Border>
+                                <Button Grid.Column="7" Style="{StaticResource BtnSm}" Content="▲" MinWidth="26" Margin="4,0,0,0" Tag="next:1" Click="OnCountStep" ToolTip="한 줄 더"/>
+                                <Button Grid.Column="8" Style="{StaticResource BtnSm}" Content="▼" MinWidth="26" Margin="2,0,0,0" Tag="next:-1" Click="OnCountStep" ToolTip="한 줄 덜"/>
                             </Grid>
                             <WrapPanel Margin="0,8,0,0">
                                 <TextBlock Style="{StaticResource Label}" Text="보이기" Width="44"/>
-                                <Button x:Name="ShowPrevBtn" Style="{StaticResource BtnSm}" Click="OnTogglePrev" Margin="0,0,4,0"/>
                                 <Button x:Name="ShowSectionBtn" Style="{StaticResource BtnSm}" Click="OnToggleSection" Margin="0,0,4,0"/>
                                 <Button x:Name="ShowCueBtn" Style="{StaticResource BtnSm}" Click="OnToggleCue"/>
                             </WrapPanel>

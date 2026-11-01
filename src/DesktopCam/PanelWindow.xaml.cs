@@ -120,6 +120,7 @@ public partial class PanelWindow : Window
         if (!RegisterHotKey(_hwnd, HotkeyScript, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)'S')) failed.Add("Ctrl+Alt+S");
         if (!RegisterHotKey(_hwnd, HotkeyNext, MOD_CONTROL | MOD_ALT, (uint)'N')) failed.Add("Ctrl+Alt+N");
         if (!RegisterHotKey(_hwnd, HotkeyPrev, MOD_CONTROL | MOD_ALT, (uint)'B')) failed.Add("Ctrl+Alt+B");
+        CreateInk(failed);   // 그림 창 + Ctrl+Alt+1~5 · 9 · 0 (대본 · 후원 안내보다 먼저: 그 창들의 주인)
         if (failed.Count > 0) _hotkeyFail = $"{string.Join(", ", failed)} 단축키를 다른 프로그램이 쓰고 있어 쓸 수 없습니다.";
 
         StartupTrace.Mark("hotkeys");
@@ -141,6 +142,7 @@ public partial class PanelWindow : Window
         CreateDonate();
         RepairInterruptedRecording();
         ClipCheck.Run(this, "패널");
+        if (_settings.PanelCollapsed || Environment.GetEnvironmentVariable("DESKTOPCAM_COLLAPSE") == "1") Dispatcher.BeginInvoke(Collapse, DispatcherPriority.ApplicationIdle);   // 지난번에 닫아 두었으면 미니 바로 시작
         if (Environment.GetEnvironmentVariable("DESKTOPCAM_OPEN_EDITOR") == "1") OnScriptEditor(this, new RoutedEventArgs());   // 확인용
         if (Environment.GetEnvironmentVariable("DESKTOPCAM_OPEN_AUDIO") == "1") OnAudioSettings(this, new RoutedEventArgs());     // 확인용
         if (Environment.GetEnvironmentVariable("DESKTOPCAM_TOUR") == "1") Dispatcher.BeginInvoke(StartTour, System.Windows.Threading.DispatcherPriority.ApplicationIdle);   // 확인용
@@ -169,6 +171,7 @@ public partial class PanelWindow : Window
         UnregisterHotKey(_hwnd, HotkeyScript);
         UnregisterHotKey(_hwnd, HotkeyNext);
         UnregisterHotKey(_hwnd, HotkeyPrev);
+        UnregisterInkHotkeys();
         _fitter.RestoreAllFitted(_region);   // 맞춰 둔 창은 원래 자리로 (제목 표시줄이 화면 밖에 남지 않게)
         DisposeScriptAndMonitor();
         _recorder.Dispose();
@@ -192,6 +195,7 @@ public partial class PanelWindow : Window
             else if (wParam.ToInt32() == HotkeyScript) ToggleScript();
             else if (wParam.ToInt32() == HotkeyNext) SetScriptLine(_settings.ScriptLine + 1);
             else if (wParam.ToInt32() == HotkeyPrev) SetScriptLine(_settings.ScriptLine - 1);
+            else OnInkHotkey(wParam.ToInt32());
             handled = true;
         }
         return IntPtr.Zero;
@@ -265,8 +269,11 @@ public partial class PanelWindow : Window
         Width = widthPx / s;
         Height = heightPx / s;
         _overlay.SetPanelShadow(leftPx, topPx, widthPx, heightPx);
+        if (_collapsed) _overlay.HidePanelShadow();
         _panelPx = new Rect(leftPx, topPx, widthPx, heightPx);
         _workArea = work;
+        _ink?.Place(_region);
+        if (_collapsed) _mini?.Place(leftPx, topPx);   // 미니 바 = 패널 왼쪽 위 자리 (영역을 옮기면 같이)
         PlaceScript();
         PlaceHelpButton();
     }
@@ -332,6 +339,7 @@ public partial class PanelWindow : Window
         LevelMeter.ResetBrushes();
         SysMeter.InvalidateVisual();
         MicMeter.InvalidateVisual();
+        _mini?.ThemeChanged();
         UpdateAudioToggles();
         UpdateMonitorUi();
         UpdateFxLabel();
@@ -356,17 +364,25 @@ public partial class PanelWindow : Window
     void OnHeaderDown(object sender, MouseButtonEventArgs e)
     {
         if (_recordingUi) { e.Handled = true; return; }   // 녹화 중에는 영역 고정
+        BeginRegionDrag();
+        Header.CaptureMouse();
+        e.Handled = true;
+    }
+
+    /// <summary>영역 끌기 시작 (패널 머리 칸 · 미니 바 십자 아이콘 공통). 마우스 잡기는 부르는 쪽이 한다.</summary>
+    void BeginRegionDrag()
+    {
         GetCursorPos(out _dragCursor);
         _dragX = _settings.OffsetX;
         _dragY = _settings.OffsetY;
         // 맞춰 둔 창은 놓았을 때 새 위치로 따라오게
         _dragFitted = _items.Where(i => _fitter.IsFitted(i.Handle, _region)).Select(i => i.Handle).ToList();
         _dragging = true;
-        Header.CaptureMouse();
-        e.Handled = true;
     }
 
-    void OnHeaderMove(object sender, MouseEventArgs e)
+    void OnHeaderMove(object sender, MouseEventArgs e) => RegionDragMove();
+
+    void RegionDragMove()
     {
         if (!_dragging) return;
         GetCursorPos(out var p);
@@ -395,7 +411,9 @@ public partial class PanelWindow : Window
 
     void OnHeaderUp(object sender, MouseButtonEventArgs e) => Header.ReleaseMouseCapture();
 
-    void OnHeaderLost(object sender, MouseEventArgs e)
+    void OnHeaderLost(object sender, MouseEventArgs e) => EndRegionDrag();
+
+    void EndRegionDrag()
     {
         if (!_dragging) return;
         _dragging = false;
@@ -724,6 +742,7 @@ public partial class PanelWindow : Window
 
         SysMeter.Push(sp, !_settings.SystemEnabled || !_audio.HasSystem);
         MicMeter.Push(mp, !micLive);
+        MiniTick(sp, !_settings.SystemEnabled || !_audio.HasSystem, mp, !micLive);
 
         if (sp >= ClipPeak) _sysClipUntil = now.AddSeconds(2);
         if (mp >= ClipPeak) _micClipUntil = now.AddSeconds(2);

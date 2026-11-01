@@ -1,0 +1,19 @@
+<Window x:Class="DesktopCam.ColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Desktop CAM Color"
+        WindowStyle="None" ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False" Topmost="True" Background="{DynamicResource BgPanel}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+    <!-- 펜 색 고르기: 오피스처럼 테마 색(10 × 위 1줄 + 밝기 5줄) · 표준 색 10개. 커서 오른쪽 아래에 뜨고, 고르거나 바깥을 누르면 닫힌다.
+         녹화에 찍히지 않는다 -->
+    <Border BorderBrush="{DynamicResource TealDeep}" BorderThickness="{DynamicResource EdgeW}" Padding="8">
+        <StackPanel>
+            <TextBlock Text="테마 색" FontFamily="{StaticResource KoFont}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,0,0,4"/>
+            <UniformGrid x:Name="ThemeTop" Columns="10" Rows="1"/>
+            <UniformGrid x:Name="ThemeShades" Columns="10" Rows="5" Margin="0,6,0,0"/>
+            <TextBlock Text="표준 색" FontFamily="{StaticResource KoFont}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,10,0,4"/>
+            <UniformGrid x:Name="Standard" Columns="10" Rows="1"/>
+        </StackPanel>
+    </Border>
+</Window>

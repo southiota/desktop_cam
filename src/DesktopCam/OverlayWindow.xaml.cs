@@ -82,6 +82,9 @@ public partial class OverlayWindow : Window
         PlaceCredit(_hole, s);   // 패널 높이가 바뀌면 크레딧 자리도 다시
     }
 
+    /// <summary>패널을 닫아 미니 바만 보일 때: 패널 그림자를 숨긴다 (다시 열면 SetPanelShadow 가 보이게 함).</summary>
+    public void HidePanelShadow() => PanelShadow.Visibility = Visibility.Collapsed;
+
     /// <summary>
     /// 크레딧은 녹화에 찍히지 않도록 항상 영역 바깥에 둔다.
     /// 1) 영역 아래, 왼쪽 맞춤  2) 영역 왼쪽, 아래 맞춤
