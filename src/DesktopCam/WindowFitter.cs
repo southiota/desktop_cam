@@ -59,20 +59,28 @@ public class WindowFitter
     /// </summary>
     public bool StripCaption { get; set; }
 
-    /// <summary>맞춘 창마다 위로 올린 제목 표시줄 높이 (0 = 그냥 맞춤). 맞춘 상태인지 판단할 때 쓴다.</summary>
-    readonly Dictionary<IntPtr, int> _lift = new();
+    /// <summary>맞춘 창마다 영역 밖으로 뺀 두께 (왼·위·오른·아래, 0 = 그냥 맞춤). 맞춘 상태인지 판단할 때 쓴다.</summary>
+    readonly Dictionary<IntPtr, Native.RECT> _inset = new();
 
-    public enum CaptionResult { None, Lifted, NotFound, Blocked }
+    public enum CaptionResult { None, Lifted, Web, NotFound, Blocked }
 
-    public record FitResult(bool Ok, Native.RECT Actual, Native.RECT Target, int Lift, CaptionResult Caption);
+    /// <summary>Inset = 영역 밖으로 뺀 두께 (Left·Top·Right·Bottom 에 각각 왼·위·오른·아래 두께). Lift = 위 두께.</summary>
+    public record FitResult(bool Ok, Native.RECT Actual, Native.RECT Target, Native.RECT Inset, CaptionResult Caption)
+    {
+        public int Lift => Inset.Top;
+    }
+
+    static Native.RECT Grow(Native.RECT r, Native.RECT ins) =>
+        new(r.Left - ins.Left, r.Top - ins.Top, r.Right + ins.Right, r.Bottom + ins.Bottom);
 
     /// <summary>
-    /// 창의 보이는 테두리를 region 에 맞춘다. 제목 표시줄 빼기가 켜져 있으면 테두리를
-    /// (region.Left, region.Top − H, region.Width, region.Height + H) 로 잡아 제목 표시줄(높이 H)을 영역 위로 밀어 올린다.
+    /// 창의 보이는 테두리를 region 에 맞춘다. 제목 표시줄 빼기가 켜져 있으면
+    /// - 웹 브라우저: 탭 줄 · 주소창 · 왼쪽 · 오른쪽 · 아래 테두리를 모두 영역 밖으로 빼고 웹 화면만 영역을 채운다.
+    /// - 그 밖의 창: 테두리를 (region.Left, region.Top − H, region.Width, region.Height + H) 로 잡아 제목 표시줄(높이 H)을 영역 위로 밀어 올린다.
     /// </summary>
     public FitResult Fit(IntPtr h, Native.RECT region)
     {
-        if (!IsWindow(h)) return new(false, default, region, 0, CaptionResult.None);
+        if (!IsWindow(h)) return new(false, default, region, default, CaptionResult.None);
 
         if (!_saved.ContainsKey(h))
         {
@@ -84,33 +92,122 @@ public class WindowFitter
         // 최대화 상태에서 최소화된 창은 한 번 복원하면 최대화로 돌아오므로 두 번까지 복원한다.
         for (int i = 0; i < 2 && (IsIconic(h) || IsZoomed(h)); i++) ShowWindow(h, SW_RESTORE);
 
-        // Windows 10/11 창은 보이지 않는 테두리(약 7px)가 있으므로 그만큼 더 크게 잡는다.
-        GetWindowRect(h, out var outer);
-        var frame = GetFrameBounds(h);
-        int l = frame.Left - outer.Left, t = frame.Top - outer.Top;
-        int r = outer.Right - frame.Right, b = outer.Bottom - frame.Bottom;
-
-        int lift = 0;
+        var ins = new Native.RECT();
         var caption = CaptionResult.None;
+        bool web = StripCaption && IsBrowser(h);
         if (StripCaption)
         {
-            lift = TitleBarHeight(h, frame);
-            caption = lift > 0 ? CaptionResult.Lifted : CaptionResult.NotFound;
+            ins.Top = TitleBarHeight(h, GetFrameBounds(h));
+            caption = ins.Top > 0 ? CaptionResult.Lifted : CaptionResult.NotFound;
         }
-        var target = new Native.RECT(region.Left, region.Top - lift, region.Right, region.Bottom);
 
-        // 영역이 화면 맨 위면 Top 이 음수(화면 위 밖)가 되지만 그대로 둔다.
-        bool ok = SetWindowPos(h, IntPtr.Zero,
-            target.Left - l, target.Top - t,
-            target.Width + l + r, target.Height + t + b,
-            SWP_NOZORDER | SWP_NOACTIVATE);
+        var target = Grow(region, ins);
+        bool ok = Place(h, target);
+
+        // 브라우저: 옮긴 뒤 웹 화면 자리를 재서 탭 줄 · 주소창 · 테두리 두께를 구하고, 그만큼 크게 다시 맞춘다.
+        // (창 크기에 따라 줄 높이가 바뀔 수 있어 두 번까지 고쳐 맞춤)
+        if (ok && web)
+        {
+            for (int pass = 0; pass < 2; pass++)
+            {
+                if (WebInset(h) is not Native.RECT w) break;
+                ins = w;
+                caption = CaptionResult.Web;
+                var next = Grow(region, ins);
+                if (Matches(next, target)) break;
+                target = next;
+                if (!(ok = Place(h, target))) break;
+            }
+        }
         SetForegroundWindow(h);
 
         var actual = GetFrameBounds(h);
         // Windows 나 프로그램이 위치를 되돌려 위로 올라가지 못한 경우
-        if (ok && lift > 0 && actual.Top > target.Top + 1) caption = CaptionResult.Blocked;
-        if (ok) _lift[h] = lift;
-        return new(ok, actual, target, lift, caption);
+        if (ok && ins.Top > 0 && actual.Top > target.Top + 1) caption = CaptionResult.Blocked;
+        if (ok) _inset[h] = ins;
+        return new(ok, actual, target, ins, caption);
+    }
+
+    /// <summary>보이는 테두리를 target 에 맞춘다. Windows 10/11 창은 보이지 않는 테두리(약 7px)가 있으므로 그만큼 더 크게 잡는다.
+    /// 영역이 화면 맨 위면 Top 이 음수(화면 위 밖)가 되지만 그대로 둔다.</summary>
+    static bool Place(IntPtr h, Native.RECT target)
+    {
+        GetWindowRect(h, out var outer);
+        var frame = GetFrameBounds(h);
+        int l = frame.Left - outer.Left, t = frame.Top - outer.Top;
+        int r = outer.Right - frame.Right, b = outer.Bottom - frame.Bottom;
+        return SetWindowPos(h, IntPtr.Zero,
+            target.Left - l, target.Top - t,
+            target.Width + l + r, target.Height + t + b,
+            SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    static readonly HashSet<string> Browsers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "chrome", "msedge", "firefox", "whale", "brave", "opera", "vivaldi", "chromium", "librewolf", "waterfox", "floorp", "zen",
+    };
+
+    public static bool IsBrowser(IntPtr h) => Browsers.Contains(ProcessName(h));
+
+    /// <summary>
+    /// 브라우저 창에서 웹 화면 바깥 두께 (왼·위·오른·아래, 실제 픽셀). 못 찾으면 null.
+    /// Chromium 계열(Chrome · Edge · Whale …)은 웹 화면 자식 창(Chrome_RenderWidgetHostHWND)을,
+    /// Firefox 는 UI Automation 의 문서(Document) 요소를 잰다.
+    /// 브라우저가 바뀐 창 크기를 반영할 때까지 잠깐(최대 약 0.5초) 기다린다.
+    /// </summary>
+    static Native.RECT? WebInset(IntPtr h)
+    {
+        Native.RECT? last = null;
+        bool chromium = ChromiumContent(h) != null;
+        for (int i = 0; i < 12; i++)
+        {
+            var frame = GetFrameBounds(h);
+            var content = chromium ? ChromiumContent(h) : UiaDocument(h);
+            if (content is Native.RECT c && c.Width > 100 && c.Height > 100)
+            {
+                var ins = new Native.RECT(c.Left - frame.Left, c.Top - frame.Top, frame.Right - c.Right, frame.Bottom - c.Bottom);
+                bool sane = ins.Left >= 0 && ins.Top >= 0 && ins.Right >= 0 && ins.Bottom >= 0 &&
+                            ins.Top < frame.Height / 2 && ins.Left + ins.Right < frame.Width / 2 && ins.Bottom < frame.Height / 4;
+                if (!sane) return null;
+                if (last is Native.RECT p && Matches(p, ins)) return ins;   // 두 번 연달아 같으면 자리 잡은 것
+                last = ins;
+            }
+            else if (i >= 2 && last == null) return null;
+            Thread.Sleep(40);
+        }
+        return last;
+    }
+
+    /// <summary>Chromium 웹 화면 자식 창 중 보이는 가장 큰 것의 자리. 없으면 null.</summary>
+    static Native.RECT? ChromiumContent(IntPtr h)
+    {
+        Native.RECT? best = null;
+        EnumChildWindows(h, (c, _) =>
+        {
+            if (IsWindowVisible(c) && GetClass(c) == "Chrome_RenderWidgetHostHWND" && GetWindowRect(c, out var r) &&
+                (best is not Native.RECT b || (long)r.Width * r.Height > (long)b.Width * b.Height))
+                best = r;
+            return true;
+        }, IntPtr.Zero);
+        return best;
+    }
+
+    /// <summary>UI Automation 으로 찾은 첫 문서(웹 화면) 요소의 자리 (Firefox 등). 없으면 null.</summary>
+    static Native.RECT? UiaDocument(IntPtr h)
+    {
+        try
+        {
+            var root = System.Windows.Automation.AutomationElement.FromHandle(h);
+            var doc = root?.FindFirst(System.Windows.Automation.TreeScope.Descendants,
+                new System.Windows.Automation.PropertyCondition(
+                    System.Windows.Automation.AutomationElement.ControlTypeProperty,
+                    System.Windows.Automation.ControlType.Document));
+            if (doc == null) return null;
+            var b = doc.Current.BoundingRectangle;
+            if (b.IsEmpty || b.Width < 1) return null;
+            return new Native.RECT((int)Math.Round(b.Left), (int)Math.Round(b.Top), (int)Math.Round(b.Right), (int)Math.Round(b.Bottom));
+        }
+        catch { return null; }
     }
 
     /// <summary>스스로 그리는 제목 표시줄 높이 (배율 100% 기준 DIP). 값을 바꾸려면 여기만 고친다.</summary>
@@ -143,7 +240,7 @@ public class WindowFitter
     /// <summary>맞추기 전 위치·크기·상태(최대화 등)로 되돌린다.</summary>
     public bool Restore(IntPtr h)
     {
-        _lift.Remove(h);
+        _inset.Remove(h);
         if (!_saved.Remove(h, out var wp) || !IsWindow(h)) return false;
         SetWindowPlacement(h, ref wp);
         SetForegroundWindow(h);
@@ -156,7 +253,7 @@ public class WindowFitter
         foreach (var h in _saved.Keys.ToList())
         {
             if (!IsWindow(h) || !IsFitted(h, region)) continue;
-            _lift.Remove(h);
+            _inset.Remove(h);
             _saved.Remove(h, out var wp);
             SetWindowPlacement(h, ref wp);
         }
@@ -167,13 +264,12 @@ public class WindowFitter
         Math.Abs(a.Right - b.Right) <= 1 && Math.Abs(a.Bottom - b.Bottom) <= 1;
 
     /// <summary>지금 영역에 맞춰져 있는 창인지 (맞춘 뒤 사용자가 옮겼으면 false).
-    /// 제목 표시줄 빼기로 위로 늘린 창도 맞춘 상태로 본다.</summary>
+    /// 제목 표시줄 빼기로 영역 밖까지 늘린 창도 맞춘 상태로 본다.</summary>
     public bool IsFitted(IntPtr h, Native.RECT region)
     {
         if (!_saved.ContainsKey(h) || IsIconic(h)) return false;
         var frame = GetFrameBounds(h);
         if (Matches(frame, region)) return true;
-        return _lift.TryGetValue(h, out int lift) && lift > 0 &&
-               Matches(frame, new Native.RECT(region.Left, region.Top - lift, region.Right, region.Bottom));
+        return _inset.TryGetValue(h, out var ins) && Matches(frame, Grow(region, ins));
     }
 }

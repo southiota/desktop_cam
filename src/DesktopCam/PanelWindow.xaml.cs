@@ -616,9 +616,11 @@ public partial class PanelWindow : Window
         else if (res.Caption == WindowFitter.CaptionResult.Blocked)
             SetStatus("WAIT", $"\"{title}\" 창이 위로 올라가지 않아 제목 표시줄이 영역에 남습니다. 영역을 조금 아래로 옮겨 보세요.");
         else if (!WindowFitter.Matches(res.Actual, res.Target))
-            SetStatus("WAIT", $"\"{title}\" 창은 크기 제한이 있어 {res.Actual.Width}×{res.Actual.Height - res.Lift}까지만 맞춰졌습니다.");
+            SetStatus("WAIT", $"\"{title}\" 창은 크기 제한이 있어 {res.Actual.Width - res.Inset.Left - res.Inset.Right}×{res.Actual.Height - res.Inset.Top - res.Inset.Bottom}까지만 맞춰졌습니다.");
         else if (res.Caption == WindowFitter.CaptionResult.NotFound)
             SetStatus("WAIT", $"\"{title}\" 창은 제목 표시줄을 찾지 못해 그냥 맞췄습니다.");
+        else if (res.Caption == WindowFitter.CaptionResult.Web)
+            SetStatus("OK", $"\"{title}\" 창의 웹 화면만 {_region.Width}×{_region.Height}로 맞췄습니다 (탭 · 주소창 · 테두리는 영역 밖).");
         else
             SetStatus("OK", $"\"{title}\" 창을 {_region.Width}×{_region.Height}로 맞췄습니다.");
     }
