@@ -120,7 +120,8 @@ public partial class PanelWindow : Window
         if (!RegisterHotKey(_hwnd, HotkeyScript, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)'S')) failed.Add("Ctrl+Alt+S");
         if (!RegisterHotKey(_hwnd, HotkeyNext, MOD_CONTROL | MOD_ALT, (uint)'N')) failed.Add("Ctrl+Alt+N");
         if (!RegisterHotKey(_hwnd, HotkeyPrev, MOD_CONTROL | MOD_ALT, (uint)'B')) failed.Add("Ctrl+Alt+B");
-        CreateInk(failed);   // 그림 창 + Ctrl+Alt+1~5 · 9 · 0 (대본 · 후원 안내보다 먼저: 그 창들의 주인)
+        CreateInk(failed);
+        CreateInputHook(failed);   // 녹화 영역 안 Ctrl 단축키 · Ctrl+우클릭 메뉴   // 그림 창 + Ctrl+Alt+1~5 · 9 · 0 (대본 · 후원 안내보다 먼저: 그 창들의 주인)
         if (failed.Count > 0) _hotkeyFail = $"{string.Join(", ", failed)} 단축키를 다른 프로그램이 쓰고 있어 쓸 수 없습니다.";
 
         StartupTrace.Mark("hotkeys");
@@ -172,6 +173,7 @@ public partial class PanelWindow : Window
         UnregisterHotKey(_hwnd, HotkeyNext);
         UnregisterHotKey(_hwnd, HotkeyPrev);
         UnregisterInkHotkeys();
+        _input?.Dispose();
         _fitter.RestoreAllFitted(_region);   // 맞춰 둔 창은 원래 자리로 (제목 표시줄이 화면 밖에 남지 않게)
         DisposeScriptAndMonitor();
         _recorder.Dispose();

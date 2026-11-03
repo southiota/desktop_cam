@@ -466,6 +466,7 @@
                 <Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + R 녹화 · P 멈춤 · F 맞추기 · M 최소화
                 <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + S 대본 · 9/B 이전 줄 · 0/N 다음 줄
                 <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + 1 커서 · 2 펜 · 3 형광펜 · 4 색 · 5 지우기
+                <LineBreak/>영역 안 <Run Foreground="{DynamicResource Teal}" Text="Ctrl"/> + ← → 대본 · L 커서 · ; 펜 · ' 형광펜 · . 색 · / 지우기 · 우클릭 메뉴
             </TextBlock>
         </Grid>
     </Border>

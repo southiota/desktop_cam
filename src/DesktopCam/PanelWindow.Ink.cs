@@ -8,6 +8,7 @@ namespace DesktopCam;
 /// <summary>
 /// 펜 · 형광펜(그림 창), 패널 닫기 → 미니 바, 숫자 단축키.
 /// 단축키: Ctrl+Alt+1 커서 · 2 펜 · 3 형광펜 · 4 색 고르기 · 5 지우기 · 9 대본 이전 줄 · 0 다음 줄 (언제나).
+/// 마우스가 녹화 영역 안이면 Ctrl+L ; ' . / · Ctrl+← → 와 Ctrl+우클릭 메뉴도 (InputHook).
 /// 펜 · 형광펜을 쓰는 중에는 그림 창이 포커스를 가지므로 숫자만 눌러도 된다 (다른 프로그램의 숫자 입력은 막지 않음).
 /// </summary>
 public partial class PanelWindow
@@ -114,7 +115,7 @@ public partial class PanelWindow
 
     void RestoreFocus()
     {
-        if (_beforeDraw != IntPtr.Zero && IsWindow(_beforeDraw)) SetForegroundWindow(_beforeDraw);
+        if (_beforeDraw != IntPtr.Zero && IsWindow(_beforeDraw)) ForceForeground(_beforeDraw);
     }
 
     /// <summary>오피스 스타일 색 고르기를 커서 오른쪽 아래에 띄운다. 고르면 다음 획부터 그 색.</summary>
@@ -213,5 +214,85 @@ public partial class PanelWindow
         if (_mini is not { IsVisible: true }) return;
         _mini.PushLevels(sp, sysOff, mp, micOff);
         if (_statusTick % 4 == 0) SyncMini();
+    }
+
+    // ── 녹화 영역 안 Ctrl 단축키 · Ctrl+우클릭 메뉴 ──
+    // 마우스가 녹화 영역 안에 있을 때만 키를 가져가고, 밖이면 원래 프로그램으로 보낸다.
+    // Ctrl+← 이전 줄 · Ctrl+→ 다음 줄 · Ctrl+L 커서 · Ctrl+; 펜 · Ctrl+' 형광펜 · Ctrl+. 색 · Ctrl+/ 지우기
+
+    InputHook? _input;
+    ToolMenuWindow? _menu;
+
+    void CreateInputHook(List<string> failed)
+    {
+        _input = new InputHook();
+        if (!_input.Installed) { failed.Add("영역 안 Ctrl 단축키 · Ctrl+우클릭"); return; }
+        _input.CtrlKey = (vk, p) =>
+        {
+            int a = KeyAction(vk);
+            if (a == 0 || !InRegion(p) || OwnWindowInFront()) return false;
+            Dispatcher.BeginInvoke(() => RunAction(a));
+            return true;
+        };
+        _input.CtrlRightDown = p => InRegion(p) && !OwnWindowInFront();
+        _input.CtrlRightClicked += p => Dispatcher.BeginInvoke(() => ShowToolMenu(p));
+    }
+
+    /// <summary>가상 키 → 동작 번호 (1~5 = 도구, 9 = 이전 줄, 10 = 다음 줄, 0 = 안 씀).</summary>
+    static int KeyAction(int vk) => vk switch
+    {
+        0x25 => 9,    // ←
+        0x27 => 10,   // →
+        0x4C => 1,    // L
+        0xBA => 2,    // ;
+        0xDE => 3,    // '
+        0xBE => 4,    // .
+        0xBF => 5,    // /
+        _ => 0,
+    };
+
+    void RunAction(int a)
+    {
+        if (a is >= 1 and <= 5) DoTool(a);
+        else if (a == 9) SetScriptLine(_settings.ScriptLine - 1);
+        else if (a == 10) SetScriptLine(_settings.ScriptLine + 1);
+    }
+
+    bool InRegion(POINT p) => p.X >= _region.Left && p.X < _region.Right && p.Y >= _region.Top && p.Y < _region.Bottom;
+
+    /// <summary>이 프로그램의 다른 창(대본 편집기 · 색 고르기 · 메뉴 등)이 앞에 있으면 키를 가져가지 않는다 (글자 입력 중 Ctrl+← 등). 그림 창은 예외.</summary>
+    bool OwnWindowInFront()
+    {
+        var fg = GetForegroundWindow();
+        if (fg == IntPtr.Zero || (_ink != null && fg == _ink.Handle)) return false;
+        GetWindowThreadProcessId(fg, out uint pid);
+        return pid == (uint)Environment.ProcessId;
+    }
+
+    void ShowToolMenu(POINT p)
+    {
+        if (_ink == null || _menu != null) return;
+        var fg = GetForegroundWindow();
+        var tool = _ink.Tool;
+        _menu = new ToolMenuWindow(new ToolMenuWindow.Item[]
+        {
+            new("◀ 이전 줄", "Ctrl+←", () => RunAction(9)),
+            new("▶ 다음 줄", "Ctrl+→", () => RunAction(10)),
+            new("커서", "Ctrl+L", () => RunAction(1), tool == InkTool.Cursor, GapBefore: true),
+            new("펜", "Ctrl+;", () => RunAction(2), tool == InkTool.Pen),
+            new("형광펜", "Ctrl+'", () => RunAction(3), tool == InkTool.Highlighter),
+            new("색 고르기", "Ctrl+.", () => RunAction(4)),
+            new("전부 지우기", "Ctrl+/", () => RunAction(5)),
+        }) { Owner = TopOwner };
+        _menu.Closed += (_, _) =>
+        {
+            var chosen = _menu?.Chosen;
+            _menu = null;
+            // 메뉴를 띄우기 전 창으로 포커스를 먼저 돌려 둔다 (펜을 켜면 그 창을 기억했다가 커서로 돌아올 때 돌려줌)
+            if (fg != IntPtr.Zero && IsWindow(fg)) ForceForeground(fg);
+            chosen?.Run();
+            if (_ink.Tool != InkTool.Cursor && _picker == null) _ink.SetTool(_ink.Tool, PenColor);   // 그리는 중이면 그림 창이 다시 키를 받게
+        };
+        _menu.ShowAt(p);
     }
 }

@@ -103,5 +103,6 @@ public partial class ColorPickerWindow : Window
         Left = x / s;
         Top = y / s;
         Activate();
+        ForceForeground(new System.Windows.Interop.WindowInteropHelper(this).Handle);   // 훅 · 단축키에서 불려도 포커스를 받게
     }
 }

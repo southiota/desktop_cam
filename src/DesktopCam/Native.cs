@@ -67,6 +67,23 @@ public static class Native
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
+    [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint a, uint b, bool attach);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+
+    /// <summary>
+    /// 창을 맨 앞 · 포커스로. 저수준 훅에서 시작한 동작은 Windows 가 사용자 입력으로 치지 않아 SetForegroundWindow 가 막히므로,
+    /// 잠깐 지금 앞 창의 입력 스레드에 붙었다가 뗀다.
+    /// </summary>
+    public static void ForceForeground(IntPtr h)
+    {
+        var fg = GetForegroundWindow();
+        if (fg == h) return;
+        uint me = GetCurrentThreadId(), other = fg == IntPtr.Zero ? 0 : GetWindowThreadProcessId(fg, out _);
+        bool attached = other != 0 && other != me && AttachThreadInput(me, other, true);
+        BringWindowToTop(h);
+        SetForegroundWindow(h);
+        if (attached) AttachThreadInput(me, other, false);
+    }
 
     // 다른 프로그램의 창이 앞으로 오거나 최소화될 때 알림 (목록을 바로 다시 정렬)
     public delegate void WinEventProc(IntPtr hook, uint ev, IntPtr h, int idObject, int idChild, uint thread, uint time);

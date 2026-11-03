@@ -104,7 +104,7 @@ public partial class PanelWindow
 
         new(() => PanelPx(ShortcutText),
             "단축키",
-            "Ctrl+Alt 와 같이 누릅니다. 다른 프로그램을 쓰는 중에도 됩니다. 펜 · 형광펜으로 그리는 중에는 숫자만 눌러도 되고, Esc = 커서, Ctrl+Z = 한 획 지우기. 그린 것은 녹화에 찍힙니다."),
+            "Ctrl+Alt 와 같이 누릅니다. 다른 프로그램을 쓰는 중에도 됩니다. 펜 · 형광펜으로 그리는 중에는 숫자만 눌러도 되고, Esc = 커서, Ctrl+Z = 한 획 지우기. 마우스가 녹화 영역 안이면 Ctrl+← → 대본, Ctrl+L 커서 · ; 펜 · ' 형광펜 · . 색 · / 지우기, Ctrl+우클릭 = 메뉴. 그린 것은 녹화에 찍힙니다."),
 
         new(() => _help != null ? Px(_help.HelpBtn) : null,
             "사용법",
