@@ -5,7 +5,7 @@ namespace DesktopCam;
 
 /// <summary>
 /// 시스템 전체 키보드 · 마우스 저수준 훅 (WH_KEYBOARD_LL · WH_MOUSE_LL).
-/// 녹화 영역 안에서만 쓰는 Ctrl 단축키(Ctrl+← → · L ; ' . /)와 Ctrl+우클릭 메뉴용.
+/// 녹화 영역 안에서만 쓰는 Ctrl 단축키(Ctrl+← → · L ; ' . /)와 Shift+우클릭 메뉴용.
 /// 콜백은 설치한 스레드(UI 스레드)에서 불리고 빨리 돌아와야 하므로, 판단만 하고 실제 동작은 Dispatcher 로 미룬다.
 /// </summary>
 public sealed class InputHook : IDisposable
@@ -35,9 +35,9 @@ public sealed class InputHook : IDisposable
 
     /// <summary>Ctrl(Shift · Alt · Win 없이) + 가상 키 코드가 눌렸을 때. 화면 좌표의 커서 위치를 같이 준다. true 면 그 키를 먹는다.</summary>
     public Func<int, Native.POINT, bool>? CtrlKey;
-    /// <summary>Ctrl + 우클릭을 누를 때 (true 면 그 클릭을 먹는다). 놓을 때 RightClicked 가 불린다.</summary>
-    public Func<Native.POINT, bool>? CtrlRightDown;
-    public event Action<Native.POINT>? CtrlRightClicked;
+    /// <summary>Shift + 우클릭을 누를 때 (true 면 그 클릭을 먹는다). 놓을 때 ShiftRightClicked 가 불린다.</summary>
+    public Func<Native.POINT, bool>? ShiftRightDown;
+    public event Action<Native.POINT>? ShiftRightClicked;
 
     public bool Installed => _kb != IntPtr.Zero && _ms != IntPtr.Zero;
 
@@ -52,6 +52,7 @@ public sealed class InputHook : IDisposable
 
     static bool Down(int vk) => (GetAsyncKeyState(vk) & 0x8000) != 0;
     static bool OnlyCtrl() => Down(VK_CONTROL) && !Down(VK_SHIFT) && !Down(VK_MENU) && !Down(VK_LWIN) && !Down(VK_RWIN);
+    static bool OnlyShift() => Down(VK_SHIFT) && !Down(VK_CONTROL) && !Down(VK_MENU) && !Down(VK_LWIN) && !Down(VK_RWIN);
 
     IntPtr OnKeyboard(int code, IntPtr w, IntPtr l)
     {
@@ -72,18 +73,18 @@ public sealed class InputHook : IDisposable
         if (code >= 0)
         {
             int msg = (int)w;
-            if (msg == WM_RBUTTONDOWN && CtrlRightDown != null && OnlyCtrl())
+            if (msg == WM_RBUTTONDOWN && ShiftRightDown != null && OnlyShift())
             {
                 var m = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(l);
                 bool eat = false;
-                try { eat = CtrlRightDown(m.pt); } catch { }
+                try { eat = ShiftRightDown(m.pt); } catch { }
                 if (eat) { _eatRightUp = true; return 1; }
             }
             else if (msg == WM_RBUTTONUP && _eatRightUp)
             {
                 _eatRightUp = false;
                 var m = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(l);
-                CtrlRightClicked?.Invoke(m.pt);
+                ShiftRightClicked?.Invoke(m.pt);
                 return 1;   // 아래 프로그램에 오른쪽 메뉴가 뜨지 않게 놓는 것도 먹는다
             }
         }

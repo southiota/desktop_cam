@@ -8,7 +8,7 @@ using static DesktopCam.Native;
 namespace DesktopCam;
 
 /// <summary>
-/// 녹화 영역 안에서 Ctrl+우클릭으로 뜨는 메뉴: 대본 이전 줄 · 다음 줄, 커서 · 펜 · 형광펜 · 색 · 지우기.
+/// 녹화 영역 안에서 Shift+우클릭으로 뜨는 메뉴: 대본 이전 줄 · 다음 줄, 커서 · 펜 · 형광펜 · 색 · 지우기.
 /// 커서 오른쪽 아래에 뜨고, 고르거나 바깥을 누르거나 Esc 면 닫힌다. 녹화에 찍히지 않는다.
 /// </summary>
 public sealed class ToolMenuWindow : Window

@@ -8,17 +8,15 @@ namespace DesktopCam;
 /// <summary>
 /// 펜 · 형광펜(그림 창), 패널 닫기 → 미니 바, 숫자 단축키.
 /// 단축키: Ctrl+Alt+1 커서 · 2 펜 · 3 형광펜 · 4 색 고르기 · 5 지우기 · 9 대본 이전 줄 · 0 다음 줄 (언제나).
-/// 마우스가 녹화 영역 안이면 Ctrl+L ; ' . / · Ctrl+← → 와 Ctrl+우클릭 메뉴도 (InputHook).
+/// 마우스가 녹화 영역 안이면 Ctrl+L ; ' . / · Ctrl+← → 와 Shift+우클릭 메뉴도 (InputHook).
 /// 펜 · 형광펜을 쓰는 중에는 그림 창이 포커스를 가지므로 숫자만 눌러도 된다 (다른 프로그램의 숫자 입력은 막지 않음).
 /// </summary>
 public partial class PanelWindow
 {
     const int HotkeyTool1 = 21;                 // 21~25 = Ctrl+Alt+1~5
     const int HotkeyScript9 = 29, HotkeyScript0 = 30;
-    const string ToolKeys = "1 커서 · 4 색 · 5 지우기 · 9/0 대본";
 
     InkWindow? _ink;
-    HintWindow? _hint;
     MiniBarWindow? _mini;
     ColorPickerWindow? _picker;
     IntPtr _beforeDraw;   // 펜을 켜기 전에 쓰던 창 (커서로 돌아가면 포커스를 돌려준다)
@@ -42,7 +40,6 @@ public partial class PanelWindow
         _ink.KeyPressed += OnInkKey;
         _ink.Show();
         _ink.SetTool(InkTool.Cursor, PenColor);
-        _hint = new HintWindow { Owner = _ink };
 
         for (int i = 0; i < 5; i++)
             if (!RegisterHotKey(_hwnd, HotkeyTool1 + i, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)('1' + i))) failed.Add($"Ctrl+Alt+{i + 1}");
@@ -86,10 +83,7 @@ public partial class PanelWindow
             case 2: SetTool(InkTool.Pen); break;
             case 3: SetTool(InkTool.Highlighter); break;
             case 4: ShowColorPicker(); break;
-            case 5:
-                _ink.Clear();
-                Flash("✕ 전부 지웠습니다", "");
-                break;
+            case 5: _ink.Clear(); break;
         }
         _mini?.SetTool(_ink.Tool, PenColor);
     }
@@ -104,13 +98,7 @@ public partial class PanelWindow
             _beforeDraw = fg == _ink.Handle ? IntPtr.Zero : fg;
         }
         _ink.SetTool(tool, PenColor);
-        if (tool == InkTool.Cursor)
-        {
-            if (was != InkTool.Cursor) RestoreFocus();
-            if (was != InkTool.Cursor) Flash("↖ 커서", _ink.HasInk ? "그림은 남아 있습니다 · 5 지우기" : "");
-        }
-        else
-            Flash(tool == InkTool.Pen ? "✎ 펜" : "▬ 형광펜", ToolKeys, true);
+        if (tool == InkTool.Cursor && was != InkTool.Cursor) RestoreFocus();
     }
 
     void RestoreFocus()
@@ -138,17 +126,10 @@ public partial class PanelWindow
             // 포커스 돌려주기: 그리는 중이면 그림 창(숫자 키가 계속 되게), 아니면 쓰던 창
             if (_ink.Tool != InkTool.Cursor) _ink.SetTool(_ink.Tool, PenColor);
             else RestoreFocus();
-            Flash("● 펜 색", _ink.Tool == InkTool.Cursor ? "2 펜 · 3 형광펜으로 그리기" : ToolKeys, true);
         };
         _picker.ShowAtCursor();
     }
 
-    void Flash(string text, string keys, bool colored = false)
-    {
-        Brush? b = null;
-        if (colored) { var sb = new SolidColorBrush(PenColor); sb.Freeze(); b = sb; }
-        _hint?.Flash(text, keys, b);
-    }
 
     // ── 패널 닫기 ↔ 미니 바 ──
 
@@ -216,7 +197,7 @@ public partial class PanelWindow
         if (_statusTick % 4 == 0) SyncMini();
     }
 
-    // ── 녹화 영역 안 Ctrl 단축키 · Ctrl+우클릭 메뉴 ──
+    // ── 녹화 영역 안 Ctrl 단축키 · Shift+우클릭 메뉴 ──
     // 마우스가 녹화 영역 안에 있을 때만 키를 가져가고, 밖이면 원래 프로그램으로 보낸다.
     // Ctrl+← 이전 줄 · Ctrl+→ 다음 줄 · Ctrl+L 커서 · Ctrl+; 펜 · Ctrl+' 형광펜 · Ctrl+. 색 · Ctrl+/ 지우기
 
@@ -226,7 +207,7 @@ public partial class PanelWindow
     void CreateInputHook(List<string> failed)
     {
         _input = new InputHook();
-        if (!_input.Installed) { failed.Add("영역 안 Ctrl 단축키 · Ctrl+우클릭"); return; }
+        if (!_input.Installed) { failed.Add("영역 안 Ctrl 단축키 · Shift+우클릭"); return; }
         _input.CtrlKey = (vk, p) =>
         {
             int a = KeyAction(vk);
@@ -234,8 +215,8 @@ public partial class PanelWindow
             Dispatcher.BeginInvoke(() => RunAction(a));
             return true;
         };
-        _input.CtrlRightDown = p => InRegion(p) && !OwnWindowInFront();
-        _input.CtrlRightClicked += p => Dispatcher.BeginInvoke(() => ShowToolMenu(p));
+        _input.ShiftRightDown = p => InRegion(p) && !OwnWindowInFront();
+        _input.ShiftRightClicked += p => Dispatcher.BeginInvoke(() => ShowToolMenu(p));
     }
 
     /// <summary>가상 키 → 동작 번호 (1~5 = 도구, 9 = 이전 줄, 10 = 다음 줄, 0 = 안 씀).</summary>

@@ -466,7 +466,14 @@
                 <Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + R 녹화 · P 멈춤 · F 맞추기 · M 최소화
                 <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + S 대본 · 9/B 이전 줄 · 0/N 다음 줄
                 <LineBreak/><Run Foreground="{DynamicResource Teal}" Text="Ctrl+Alt"/> + 1 커서 · 2 펜 · 3 형광펜 · 4 색 · 5 지우기
-                <LineBreak/>영역 안 <Run Foreground="{DynamicResource Teal}" Text="Ctrl"/> + ← → 대본 · L 커서 · ; 펜 · ' 형광펜 · . 색 · / 지우기 · 우클릭 메뉴
+                <LineBreak/>영역 안 <Run Foreground="{DynamicResource Teal}" Text="Ctrl"/> + ← → 대본 · L 커서 · ; 펜 · ' 형광펜 · . 색 · / 지우기
+                <LineBreak/>영역 안 <Run Foreground="{DynamicResource Teal}" Text="Shift"/> + <InlineUIContainer BaselineAlignment="Center"><!-- 마우스 아이콘 (오른쪽 버튼만 채움 = 우클릭) -->
+                    <Viewbox Width="10" Height="14" Margin="1,0,3,0">
+                        <Canvas Width="14" Height="20">
+                            <Path Data="M7,1 L7,8 L13,8 L13,7 A6,6 0 0 0 7,1 Z" Fill="{DynamicResource Teal}"/>
+                            <Path Data="M7,1 A6,6 0 0 0 1,7 L1,13 A6,6 0 0 0 13,13 L13,7 A6,6 0 0 0 7,1 Z M1,8 L13,8 M7,1 L7,8" Stroke="{DynamicResource Muted}" StrokeThickness="1.4" StrokeLineJoin="Round"/>
+                        </Canvas>
+                    </Viewbox></InlineUIContainer>Menu
             </TextBlock>
         </Grid>
     </Border>
